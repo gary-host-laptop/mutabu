@@ -1,0 +1,45 @@
+/* ══════════════════════════════════════════════════════════════
+   theme.css — theme variable definitions for 無タブ
+   ──────────────────────────────────────────────────────────────
+   Each theme is a body class: body.theme-dark, body.theme-light
+   The default (no class) falls back to dark.
+
+   To add a new theme:
+     1. Add a body.theme-NAME { ... } block below
+     2. Add it to the THEMES registry in options.js
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── DARK (default) ───────────────────────────────────────────── */
+:root,
+body.theme-dark {
+    --bg:        #060608;
+    --panel:     #12111a;
+    --panel2:    #16151f;
+    --border:    #302d42;
+    --border-lt: #4a4660;
+    --white:     #e8e8f0;
+    --dim:       #8a88a0;
+    --dimmer:    #4a4660;
+    --accent:    #8ab4f8;
+    --accent2:   #c4a0f8;
+    --accent3:   #90d870;
+    --red:       #f28080;
+    --titlebar:  #0e0d16;
+}
+
+/* ── LIGHT ────────────────────────────────────────────────────── */
+body.theme-light {
+    --bg:        #e8e8e8;
+    --panel:     #f2f2f2;
+    --panel2:    #eaeaea;
+    --border:    #c8c8cc;
+    --border-lt: #b0b0b8;
+    --white:     #1a1a24;
+    --dim:       #5a5a6a;
+    --dimmer:    #a0a0b0;
+    --accent:    #3a6fd8;
+    --accent2:   #7040c8;
+    --accent3:   #3a9a3a;
+    --red:       #c83030;
+    --titlebar:  #dcdce0;
+}

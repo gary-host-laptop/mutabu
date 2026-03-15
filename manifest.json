@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "無タブ · mutabu",
-  "version": "1.0.2",
+  "version": "0.2.0",
   "description": "custom new tab page",
   "permissions": ["geolocation", "storage"],
   "icons": {
@@ -15,7 +15,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "mutabu@extension",
-      "strict_min_version": "142.0",
+      "strict_min_version": "128.0",
       "data_collection_permissions": {
         "required": ["none"],
         "optional": []

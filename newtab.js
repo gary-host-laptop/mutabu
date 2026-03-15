@@ -68,7 +68,7 @@
     });
 })();
 
-/* ── RAIN PLAYER ────────────────────────────────────────────── */
+/* ── RAIN PLAYER ─────────────────────────────────────────────── */
 (function() {
     const tracks = {
         rain:    { file: 'sounds/heavy-rain.mp3', loop: true,  id: 'vol-rain' },
@@ -137,15 +137,14 @@
     });
 })();
 
-/* ── PROFILE IMAGE ROTATION handled by applySettings below ─────── */
+/* ── PROFILE IMAGE ROTATION — handled by applySettings ───────── */
 
-/* ── CLOCK ──────────────────────────────────────────────────── */
+/* ── CLOCK ───────────────────────────────────────────────────── */
+function pad(n) { return String(n).padStart(2, '0'); }
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 /* getGreetingStrings() is provided by i18n.js */
-
-function pad(n) { return String(n).padStart(2,'0'); }
 
 function getWeekNum(d) {
     const onejan = new Date(d.getFullYear(), 0, 1);
@@ -176,7 +175,7 @@ function setGreeting(el, text) {
 
 let binaryClock = false;
 
-/* ── DRAG AND DROP SORT ─────────────────────────────────────── */
+/* ── DRAG AND DROP SORT ──────────────────────────────────────── */
 function enableDragSort(container, itemSelector, getData, setData, reload) {
     let dragSrc = null;
     container.addEventListener('dragstart', e => {
@@ -318,7 +317,7 @@ function tick() {
 window._tickInterval = setInterval(tick, 1000);
 tick();
 
-/* ── SEARCH ─────────────────────────────────────────────────── */
+/* ── SEARCH ──────────────────────────────────────────────────── */
 let activeEngine = document.querySelector('.engine-btn.active');
 
 document.querySelectorAll('.engine-btn').forEach(btn => {
@@ -339,20 +338,9 @@ document.getElementById('search-input').addEventListener('keydown', e => {
     }
 });
 
-/* ── NOTES ──────────────────────────────────────────────────── */
-const notesEl = document.getElementById('notes');
-notesEl.value = localStorage.getItem('nt_notes') || '';
-notesEl.addEventListener('input', () => localStorage.setItem('nt_notes', notesEl.value));
-document.getElementById('notes-clear').addEventListener('click', () => {
-    if (confirm('clear notes?')) {
-        notesEl.value = '';
-        localStorage.removeItem('nt_notes');
-    }
-});
-
-/* ── STORAGE HELPER ─────────────────────────────────────────────
-   Falls back to localStorage if browser.storage is unavailable
-   (e.g. when previewing as plain HTML outside the extension).    */
+/* ── STORAGE HELPER ──────────────────────────────────────────── */
+/* Falls back to localStorage when running outside the extension.
+   Use getAll() in applySettings to batch reads on startup.      */
 const Store = {
     async get(key) {
         if (typeof browser !== 'undefined' && browser.storage) {
@@ -367,11 +355,33 @@ const Store = {
             return browser.storage.local.set({ [key]: val });
         }
         localStorage.setItem(key, JSON.stringify(val));
-    }
+    },
+    async getAll() {
+        if (typeof browser !== 'undefined' && browser.storage) {
+            return browser.storage.local.get(null);
+        }
+        const result = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            try { result[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+        }
+        return result;
+    },
 };
 
-/* ── CONTEXT MENU ───────────────────────────────────────────────
-   Usage: CtxMenu.show(e, [ {label, action, danger?} ])           */
+/* ── NOTES ───────────────────────────────────────────────────── */
+const notesEl = document.getElementById('notes');
+Store.get('nt_notes').then(v => { notesEl.value = v || ''; });
+notesEl.addEventListener('input', () => Store.set('nt_notes', notesEl.value));
+document.getElementById('notes-clear').addEventListener('click', async () => {
+    if (confirm('clear notes?')) {
+        notesEl.value = '';
+        await Store.set('nt_notes', '');
+    }
+});
+
+/* ── CONTEXT MENU ────────────────────────────────────────────── */
+/* Usage: CtxMenu.show(e, [ {label, action, danger?} ])           */
 const CtxMenu = (() => {
     const el = document.getElementById('ctx-menu');
 
@@ -404,8 +414,8 @@ const CtxMenu = (() => {
     return { show, hide };
 })();
 
-/* ── MINI PROMPT ────────────────────────────────────────────────
-   Lightweight inline prompt to avoid ugly browser prompt()       */
+/* ── MINI PROMPT ─────────────────────────────────────────────── */
+/* Lightweight inline prompt to avoid using browser prompt()     */
 function miniPrompt(fields, prefill, opts) {
     const deletable = opts && opts.deletable;
     return new Promise(resolve => {
@@ -449,82 +459,25 @@ function miniPrompt(fields, prefill, opts) {
     });
 }
 
-/* ── EDIT MODE ──────────────────────────────────────────────── */
+/* ── EDIT MODE ───────────────────────────────────────────────── */
 const editToggle = document.getElementById('edit-toggle');
 editToggle.addEventListener('click', () => {
     document.body.classList.toggle('edit-mode');
 });
 
-/* ── SETTINGS ───────────────────────────────────────────────── */
+/* ── SETTINGS BUTTON ─────────────────────────────────────────── */
 document.getElementById('settings-btn').addEventListener('click', () => {
     if (typeof browser !== 'undefined' && browser.runtime) {
-        window.location.href = browser.runtime.getURL('options.html');
+        window.location.href = browser.runtime.getURL('settings.html');
     }
 });
 
-/* ── BOOKMARKS ─────────────────────────────────────────────────
-   Stored under key 'nt_bookmarks'. Seeded from defaults on first load. */
-const BM_DEFAULTS = [
-    { folder: 'log', links: [
-        { label: 'Letterboxd',   url: 'https://letterboxd.com'                    },
-        { label: 'MAL',          url: 'https://myanimelist.net'                   },
-        { label: 'AniDB',        url: 'https://anidb.net'                         },
-        { label: 'Backloggd',    url: 'https://backloggd.com'                     },
-        { label: 'RYM',          url: 'https://rateyourmusic.com'                 },
-        { label: 'Bookwyrm',     url: 'https://bookwyrm.social'                   },
-        { label: 'Trakt',        url: 'https://trakt.tv'                          },
-        { label: 'VGMdb',        url: 'https://vgmdb.net'                         },
-    ]},
-    { folder: 'social', links: [
-        { label: 'Lemmy.ml',     url: 'https://lemmy.ml'                          },
-        { label: 'Lemmygrad',    url: 'https://lemmygrad.ml'                      },
-        { label: 'Reddit',       url: 'https://reddit.com'                        },
-    ]},
-    { folder: 'learn', links: [
-        { label: 'Duolingo',     url: 'https://duolingo.com'                      },
-        { label: 'Clozemaster',  url: 'https://clozemaster.com'                   },
-        { label: 'Jisho',        url: 'https://jisho.org'                         },
-        { label: 'Keybr',        url: 'https://keybr.com'                         },
-        { label: 'TypingClub',   url: 'https://www.typingclub.com'                },
-        { label: 'Khan Academy', url: 'https://khanacademy.org'                   },
-        { label: 'freeCodeCamp', url: 'https://freecodecamp.org'                  },
-        { label: 'Seterra',      url: 'https://seterra.com'                       },
-        { label: 'Wikipedia',    url: 'https://wikipedia.org'                     },
-    ]},
-    { folder: 'dev', links: [
-        { label: 'GitHub',       url: 'https://github.com'                        },
-        { label: 'Neocities',    url: 'https://neocities.org'                     },
-        { label: 'WordPress',    url: 'https://wordpress.com'                     },
-        { label: 'AlternativeTo',url: 'https://alternativeto.net'                 },
-    ]},
-    { folder: 'media', links: [
-        { label: 'YouTube',      url: 'https://youtube.com'                       },
-        { label: 'Serial',       url: 'https://serial.tube'                       },
-        { label: 'TheRARBG',     url: 'https://therarbg.to'                       },
-        { label: 'Radio Garden', url: 'https://radio.garden'                      },
-        { label: 'Itch.io',      url: 'https://itch.io'                           },
-        { label: 'Jet Set Radio',url: 'https://jetsetradio.live'                  },
-    ]},
-    { folder: 'ai', links: [
-        { label: 'Claude',       url: 'https://claude.ai'                         },
-        { label: 'ChatGPT',      url: 'https://chatgpt.com'                       },
-        { label: 'DeepSeek',     url: 'https://chat.deepseek.com'                 },
-        { label: 'Qwen',         url: 'https://chat.qwen.ai'                      },
-    ]},
-    { folder: 'tools', links: [
-        { label: 'Raindrop',     url: 'https://app.raindrop.io'                   },
-        { label: 'KitchenOwl',   url: 'https://app.kitchenowl.org'                },
-        { label: 'Linkwarden',   url: 'https://cloud.linkwarden.app'              },
-        { label: 'Flashscore',   url: 'https://flashscore.com'                    },
-        { label: 'NationStates', url: 'https://nationstates.net'                  },
-        { label: 'TCG Pocket',   url: 'https://tcgpocketcollectiontracker.com'    },
-        { label: 'Google Maps',  url: 'https://maps.google.com'                   },
-        { label: 'Curi',         url: 'https://curi.ooo'                          },
-    ]},
-];
+/* ── BOOKMARKS ───────────────────────────────────────────────── */
+/* Stored under nt_bookmarks. Seeded from BM_DEFAULTS on first load. */
+/* BM_DEFAULTS is defined in data/defaults.js */
 
-/* ── FAVICON AUTO-FETCH ─────────────────────────────────────────
-   Uses DuckDuckGo's favicon service — privacy-respecting, no ad tracking. */
+/* ── FAVICON AUTO-FETCH ──────────────────────────────────────── */
+/* Uses DuckDuckGo's favicon service — privacy-respecting.       */
 function guessFavicon(url) {
     try {
         const { hostname } = new URL(url);
@@ -532,10 +485,8 @@ function guessFavicon(url) {
     } catch { return ''; }
 }
 
-/* ── SHARED LINK DIALOG ─────────────────────────────────────────
-   Used by both bookmarks and quick access.
-   prefill = {label, url, fav} for edit mode, omit for add.
-   Resolves {label, url, fav} on save, 'delete' on delete, null on cancel. */
+/* ── SHARED LINK DIALOG ──────────────────────────────────────── */
+/* Used by bookmarks and quick access. prefill={label,url,fav}   */
 function linkPrompt(prefill) {
     const isEdit = !!prefill;
     return new Promise(resolve => {
@@ -850,7 +801,7 @@ document.getElementById('bm-add-folder-btn').addEventListener('click', async () 
     loadBookmarks();
 });
 
-/* ── RECENTLY VISITED ───────────────────────────────────────────*/
+/* ── RECENTLY VISITED ────────────────────────────────────────── */
 async function loadRecent() {
     const grid = document.getElementById('recent-grid');
     const items = (await Store.get('nt_recent')) || [];
@@ -903,14 +854,9 @@ document.getElementById('rqa-url').addEventListener('keydown', e => { if (e.key 
 
 loadRecent();
 
-/* ── QUICK ACCESS ───────────────────────────────────────────────
-   Default links seeded on first load, then editable via storage  */
-const QA_DEFAULTS = [
-    { label: 'Raindrop',  url: 'https://app.raindrop.io'   },
-    { label: 'DeepL',     url: 'https://deepl.com'         },
-    { label: 'Habitica',  url: 'https://habitica.com'      },
-    { label: 'Notesnook', url: 'https://app.notesnook.com' },
-];
+/* ── QUICK ACCESS ────────────────────────────────────────────── */
+/* Default links seeded on first load, then editable via storage */
+/* QA_DEFAULTS is defined in data/defaults.js */
 
 async function loadQuickAccess() {
     let items = await Store.get('nt_quick');
@@ -977,19 +923,8 @@ document.getElementById('qa-add-btn').addEventListener('click', async () => {
     loadQuickAccess();
 });
 
-/* ── QUOTES ─────────────────────────────────────────────────── */
-const QUOTES = [
-    { text: 'The tradition of all dead generations weighs like a nightmare on the brains of the living.', author: 'Marx' },
-    { text: 'Everything that exists deserves to perish.', author: 'Hegel' },
-    { text: 'History does nothing; it possesses no immense wealth, it wages no battles. It is man, real, living man who does all that.', author: 'Marx & Engels' },
-    { text: 'The philosophers have only interpreted the world. The point, however, is to change it.', author: 'Marx' },
-    { text: 'There is no document of civilization that is not at the same time a document of barbarism.', author: 'Benjamin' },
-    { text: 'To live is to war with trolls in heart and soul. To write is to sit in judgment on oneself.', author: 'Ibsen' },
-    { text: 'The most courageous act is still to think for yourself. Aloud.', author: 'Chanel' },
-    { text: 'Freedom is not something that anybody can be given. Freedom is something people take.', author: 'Baldwin' },
-    { text: 'One does not discover new lands without consenting to lose sight of the shore.', author: 'Gide' },
-    { text: 'A map of the world that does not include Utopia is not worth even glancing at.', author: 'Wilde' },
-];
+/* ── QUOTES ──────────────────────────────────────────────────── */
+/* QUOTES array is defined in data/quotes.js */
 
 const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
 document.getElementById('quote-text').textContent   = q.text;
@@ -1004,87 +939,8 @@ document.getElementById('quote-next').addEventListener('click', () => {
     document.getElementById('quote-author').textContent = QUOTES[idx].author;
 });
 
-/* ── KANJI WORD OF THE DAY ──────────────────────────────────── */
-const WORDS = [
-    // N5
-    { k:'水', r:'みず',       l:'n5', m:'water' },
-    { k:'火', r:'ひ',         l:'n5', m:'fire' },
-    { k:'山', r:'やま',       l:'n5', m:'mountain' },
-    { k:'川', r:'かわ',       l:'n5', m:'river' },
-    { k:'空', r:'そら',       l:'n5', m:'sky' },
-    { k:'花', r:'はな',       l:'n5', m:'flower' },
-    { k:'木', r:'き',         l:'n5', m:'tree, wood' },
-    { k:'石', r:'いし',       l:'n5', m:'stone, rock' },
-    { k:'道', r:'みち',       l:'n5', m:'road, path' },
-    { k:'手', r:'て',         l:'n5', m:'hand' },
-    { k:'目', r:'め',         l:'n5', m:'eye' },
-    { k:'口', r:'くち',       l:'n5', m:'mouth' },
-    { k:'耳', r:'みみ',       l:'n5', m:'ear' },
-    { k:'足', r:'あし',       l:'n5', m:'foot, leg' },
-    { k:'心', r:'こころ',     l:'n5', m:'heart, mind' },
-    { k:'雨', r:'あめ',       l:'n5', m:'rain' },
-    { k:'風', r:'かぜ',       l:'n5', m:'wind' },
-    { k:'月', r:'つき',       l:'n5', m:'moon, month' },
-    { k:'日', r:'ひ',         l:'n5', m:'sun, day' },
-    { k:'年', r:'とし',       l:'n5', m:'year' },
-    // N4
-    { k:'橋', r:'はし',       l:'n4', m:'bridge' },
-    { k:'庭', r:'にわ',       l:'n4', m:'garden' },
-    { k:'池', r:'いけ',       l:'n4', m:'pond' },
-    { k:'窓', r:'まど',       l:'n4', m:'window' },
-    { k:'声', r:'こえ',       l:'n4', m:'voice' },
-    { k:'夢', r:'ゆめ',       l:'n4', m:'dream' },
-    { k:'光', r:'ひかり',     l:'n4', m:'light' },
-    { k:'影', r:'かげ',       l:'n4', m:'shadow' },
-    { k:'森', r:'もり',       l:'n4', m:'forest' },
-    { k:'海', r:'うみ',       l:'n4', m:'sea, ocean' },
-    { k:'星', r:'ほし',       l:'n4', m:'star' },
-    { k:'雪', r:'ゆき',       l:'n4', m:'snow' },
-    { k:'波', r:'なみ',       l:'n4', m:'wave' },
-    { k:'鳥', r:'とり',       l:'n4', m:'bird' },
-    { k:'葉', r:'は',         l:'n4', m:'leaf' },
-    { k:'根', r:'ね',         l:'n4', m:'root' },
-    { k:'岩', r:'いわ',       l:'n4', m:'rock, boulder' },
-    { k:'砂', r:'すな',       l:'n4', m:'sand' },
-    // N3
-    { k:'霧', r:'きり',       l:'n3', m:'fog, mist' },
-    { k:'崖', r:'がけ',       l:'n3', m:'cliff' },
-    { k:'滝', r:'たき',       l:'n3', m:'waterfall' },
-    { k:'峰', r:'みね',       l:'n3', m:'peak, summit' },
-    { k:'縁', r:'えん',       l:'n3', m:'fate, connection' },
-    { k:'鏡', r:'かがみ',     l:'n3', m:'mirror' },
-    { k:'扉', r:'とびら',     l:'n3', m:'door, gate' },
-    { k:'涙', r:'なみだ',     l:'n3', m:'tear, teardrop' },
-    { k:'傷', r:'きず',       l:'n3', m:'wound, scar' },
-    { k:'嘘', r:'うそ',       l:'n3', m:'lie, falsehood' },
-    { k:'誓', r:'ちかい',     l:'n3', m:'oath, vow' },
-    { k:'憎', r:'にくしみ',   l:'n3', m:'hatred' },
-    { k:'怒', r:'いかり',     l:'n3', m:'anger, rage' },
-    { k:'罪', r:'つみ',       l:'n3', m:'crime, sin, guilt' },
-    { k:'罰', r:'ばつ',       l:'n3', m:'punishment' },
-    { k:'闇', r:'やみ',       l:'n3', m:'darkness' },
-    // N2
-    { k:'儚', r:'はかない',   l:'n2', m:'fleeting, ephemeral' },
-    { k:'憐', r:'あわれ',     l:'n2', m:'pity, compassion' },
-    { k:'憧', r:'あこがれ',   l:'n2', m:'longing, yearning' },
-    { k:'諦', r:'あきらめ',   l:'n2', m:'resignation, giving up' },
-    { k:'葛', r:'かつら',     l:'n2', m:'arrowroot; conflict' },
-    { k:'懐', r:'なつかしい', l:'n2', m:'nostalgic, dear' },
-    { k:'煩', r:'わずらわしい',l:'n2',m:'troublesome, vexing' },
-    { k:'濁', r:'にごり',     l:'n2', m:'muddiness, impurity' },
-    { k:'彷', r:'さまよい',   l:'n2', m:'wandering' },
-    // N1
-    { k:'刹那', r:'せつな',   l:'n1', m:'moment, instant' },
-    { k:'無常', r:'むじょう', l:'n1', m:'impermanence' },
-    { k:'幽玄', r:'ゆうげん', l:'n1', m:'subtle grace, mystery' },
-    { k:'侘寂', r:'わびさび', l:'n1', m:'beauty in imperfection' },
-    { k:'物哀', r:'もののあわれ',l:'n1',m:'pathos of things' },
-    { k:'諦観', r:'ていかん', l:'n1', m:'resignation, detachment' },
-    { k:'執着', r:'しゅうちゃく',l:'n1',m:'attachment, obsession' },
-    { k:'業', r:'ごう',       l:'n1', m:'karma, fate' },
-    { k:'虚無', r:'きょむ',   l:'n1', m:'nihilism, void' },
-    { k:'断絶', r:'だんぜつ', l:'n1', m:'severance, rupture' },
-];
+/* ── KANJI WORD OF THE DAY ───────────────────────────────────── */
+/* WORDS array is defined in data/words.js */
 
 function renderWord(w) {
     const el = document.getElementById('kanji-char');
@@ -1120,16 +976,16 @@ document.getElementById('kanji-next').addEventListener('click', () => {
     renderWord(WORDS[wordIndex]);
 });
 
-/* ── THEME TOGGLE ───────────────────────────────────────────── */
-const toggleBtn = document.getElementById('theme-toggle');
-const savedTheme = localStorage.getItem('nt_theme') || 'dark';
-if (savedTheme === 'light') document.body.classList.add('light');
-toggleBtn.addEventListener('click', () => {
-    const isLight = document.body.classList.toggle('light');
-    localStorage.setItem('nt_theme', isLight ? 'light' : 'dark');
-});
+/* ── THEME ───────────────────────────────────────────────────── */
+/* Theme is set in settings. Apply saved theme class on load.    */
+(function() {
+    const t = localStorage.getItem('nt_theme') || 'dark';
+    document.body.className = document.body.className
+        .replace(/\btheme-\S+/g, '').trim();
+    document.body.classList.add('theme-' + t);
+})();
 
-/* ── FOCUS SEARCH ON KEYPRESS ───────────────────────────────── */
+/* ── FOCUS SEARCH ON KEYPRESS ────────────────────────────────── */
 document.addEventListener('keydown', e => {
     const el = document.getElementById('search-input');
     const tag = document.activeElement.tagName;
@@ -1140,13 +996,6 @@ document.addEventListener('keydown', e => {
 });
 /* ── PROFILE TAGLINE ─────────────────────────────────────────── */
 (function() {
-    const TAGLINES = [
-        '過去を殺せ',
-        'ほしのこえ',
-        '星の大海',
-        '攻殻機動隊',
-        '銀河鉄道の夜',
-    ];
     const el = document.getElementById('profile-tagline');
     if (el) el.textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
 })();
@@ -1154,6 +1003,15 @@ document.addEventListener('keydown', e => {
 /* ── SETTINGS WIRING ─────────────────────────────────────────── */
 /* Reads all nt_* keys from storage on load and applies them.     */
 (async function applySettings() {
+
+    /* ── BATCH STORAGE READ — single call instead of many ── */
+    const all = await Store.getAll();
+    const _get = key => (all[key] !== undefined ? all[key] : null);
+
+    /* ── THEME GUARD — re-apply in case localStorage was cleared ── */
+    const storedTheme = localStorage.getItem('nt_theme') || 'dark';
+    document.body.className = document.body.className.replace(/\btheme-\S+/g, '').trim();
+    document.body.classList.add('theme-' + storedTheme);
 
     /* ── helpers ── */
     function fetchTemp(lat, lon) {
@@ -1165,12 +1023,12 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 1. BACKGROUND IMAGE ── */
-    const bgImages = await Store.get('nt_bg_images');
+    const bgImages = _get('nt_bg_images');
     if (bgImages && bgImages.length > 0) {
         const pick  = bgImages[Math.floor(Math.random() * bgImages.length)];
         const bgEl  = document.getElementById('bg');
         if (bgEl) {
-            const bgBlur = await Store.get('nt_bg_blur');
+            const bgBlur = _get('nt_bg_blur');
             const img = document.createElement('img');
             img.src = pick.dataUrl;
             img.alt = '';
@@ -1181,7 +1039,7 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 2. PROFILE IMAGES ── */
-    const profImages = await Store.get('nt_profile_images');
+    const profImages = _get('nt_profile_images');
     const wrap = document.getElementById('profile-img-wrap');
     if (wrap) {
         wrap.innerHTML = '';
@@ -1200,9 +1058,9 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 3. LANGUAGE + USERNAME ── */
-    const uiLang    = await Store.get('nt_ui_lang')    || 'en';
-    const titleLang = await Store.get('nt_title_lang') || 'ja';
-    const username  = await Store.get('nt_username');
+    const uiLang    = _get('nt_ui_lang')    || 'en';
+    const titleLang = _get('nt_title_lang') || 'ja';
+    const username  = _get('nt_username');
 
     // Store uiLang globally so tick() can use it for greetings
     window._uiLang = uiLang;
@@ -1235,7 +1093,7 @@ document.addEventListener('keydown', e => {
     if (greetEl) setGreeting(greetEl, greetingSet[Math.floor(Math.random() * greetingSet.length)]);
 
     /* ── 4. LOCATION / TEMPERATURE ── */
-    const location = await Store.get('nt_location');
+    const location = _get('nt_location');
     if (location && location.lat && location.lon) {
         fetchTemp(location.lat, location.lon);
     } else if (navigator.geolocation) {
@@ -1250,7 +1108,6 @@ document.addEventListener('keydown', e => {
 
     /* ── 5. FONTS ── */
     const FONT_MAP_LATIN = {
-        'inter':           "'Inter', sans-serif",
         'share-tech-mono': "'Share Tech Mono', monospace",
         'vt323':           "'VT323', monospace",
         'courier-prime':   "'Courier Prime', monospace",
@@ -1266,9 +1123,9 @@ document.addEventListener('keydown', e => {
         'oxanium':  "'Oxanium', monospace",
     };
 
-    const fontLatin = await Store.get('nt_font_latin');
-    const fontJp    = await Store.get('nt_font_jp');
-    const fontClock = await Store.get('nt_font_clock');
+    const fontLatin = _get('nt_font_latin');
+    const fontJp    = _get('nt_font_jp');
+    const fontClock = _get('nt_font_clock');
 
     if (fontLatin && FONT_MAP_LATIN[fontLatin]) {
         document.documentElement.style.setProperty('--font-pixel',
@@ -1285,9 +1142,9 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 6. CLOCK FORMAT & SECONDS ── */
-    const clockFormat  = await Store.get('nt_clock_format');   // '24h' | '12h'
-    const clockSeconds = await Store.get('nt_clock_seconds');  // true | false
-    const clockTheme   = await Store.get('nt_clock_theme');    // 'theme' | 'light' | 'dark'
+    const clockFormat  = _get('nt_clock_format');   // '24h' | '12h'
+    const clockSeconds = _get('nt_clock_seconds');  // true | false
+    const clockTheme   = _get('nt_clock_theme');    // 'theme' | 'light' | 'dark'
 
     // Clear the original tick interval, replace with settings-aware one
     clearInterval(window._tickInterval);
@@ -1340,8 +1197,8 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 7. SEARCH ENGINES + TARGET ── */
-    const engines      = await Store.get('nt_engines');
-    const searchTarget = await Store.get('nt_search_target') || '_blank';
+    const engines      = _get('nt_engines');
+    const searchTarget = _get('nt_search_target') || '_blank';
 
     if (engines && engines.length > 0) {
         const bar = document.querySelector('.engine-bar') || document.querySelector('.search-engines');
@@ -1382,7 +1239,7 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 8. JLPT FILTER on word widget ── */
-    const jlptLevel = await Store.get('nt_jlpt_level') || 'all';
+    const jlptLevel = _get('nt_jlpt_level') || 'all';
     if (jlptLevel !== 'all') {
         const filtered = WORDS.filter(w => w.l === jlptLevel);
         if (filtered.length > 0) {
@@ -1403,7 +1260,7 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 9. CUSTOM QUOTES ── */
-    const customQuotes = await Store.get('nt_custom_quotes');
+    const customQuotes = _get('nt_custom_quotes');
     if (customQuotes && customQuotes.length > 0) {
         const q = customQuotes[Math.floor(Math.random() * customQuotes.length)];
         const textEl   = document.getElementById('quote-text');
@@ -1413,7 +1270,7 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 10. WIDGET LAYOUT (col, order, visibility) ── */
-    const layout = await Store.get('nt_widget_layout');
+    const layout = _get('nt_widget_layout');
     if (layout && layout.length > 0) {
         const cols = {
             left:   document.getElementById('col-left'),
