@@ -351,12 +351,12 @@
             margin-right: 8px;
         }
 
-        .wt-bar.red    { background: var(--red); box-shadow: 0 0 6px var(--red); }
-        .wt-bar.blue   { background: var(--accent); box-shadow: 0 0 6px rgba(138,180,248,0.5); }
-        .wt-bar.green  { background: var(--accent3); box-shadow: 0 0 6px rgba(144,216,112,0.5); }
-        .wt-bar.pink   { background: var(--accent2); box-shadow: 0 0 6px rgba(196,160,248,0.5); }
+        .wt-bar.red    { background: var(--red);     box-shadow: 0 0 6px var(--red);     }
+        .wt-bar.blue   { background: var(--accent);  box-shadow: 0 0 6px var(--accent);  }
+        .wt-bar.green  { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+        .wt-bar.pink   { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
 
-        .wt-label { color: var(--dim); }
+        .wt-label { color: var(--dim); font-weight: bold; }
         .wt-label::after { content: ' ›'; color: var(--dimmer); }
 
         .widget-body { padding: 10px; }

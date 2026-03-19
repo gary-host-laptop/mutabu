@@ -31,6 +31,18 @@
         secInput.disabled = false;
     }
 
+    function clampInput(el, max) {
+        el.addEventListener('input', () => {
+            el.value = el.value.replace(/[^0-9]/g, '');
+            if (el.value === '') return;
+            const n = parseInt(el.value);
+            if (n > max) el.value = max;
+            if (n < 0)   el.value = 0;
+        });
+    }
+    clampInput(minInput, 99);
+    clampInput(secInput, 59);
+
     startBtn.addEventListener('click', () => {
         if (running) { stop(); return; }
         const m = parseInt(minInput.value) || 0;
@@ -70,69 +82,128 @@
 
 /* ── RAIN PLAYER ─────────────────────────────────────────────── */
 (function() {
-    const tracks = {
-        rain:    { file: 'sounds/heavy-rain.mp3', loop: true,  id: 'vol-rain' },
-        wind:    { file: 'sounds/wind.mp3',        loop: true,  id: 'vol-wind' },
+    const TRACKS = {
+        rain:    { file: 'sounds/heavy-rain.mp3', loop: true,  id: 'vol-rain'    },
+        wind:    { file: 'sounds/wind.mp3',        loop: true,  id: 'vol-wind'    },
         thunder: { file: 'sounds/thunder.mp3',     loop: false, id: 'vol-thunder' },
     };
 
-    // Create audio elements
-    Object.values(tracks).forEach(t => {
-        t.audio = new Audio(t.file);
-        t.audio.loop = t.loop;
-        t.audio.volume = parseFloat(document.getElementById(t.id).value);
-    });
-
-    let playing = false;
-
-    // Thunder fires randomly every 20–60s when playing
+    let ctx        = null;   // AudioContext — created on first play (autoplay policy)
+    let masterGain = null;
+    let playing    = false;
     let thunderTimer = null;
+
+    // Per-track state: { buffer, gainNode, source }
+    // source is recreated each play (BufferSourceNode is one-shot)
+    const state = {};
+    Object.keys(TRACKS).forEach(k => { state[k] = { buffer: null, gainNode: null, source: null }; });
+
+    /* ── Init AudioContext and decode all buffers ── */
+    async function initAudio() {
+        ctx        = new AudioContext();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = parseFloat(document.getElementById('vol-master').value);
+        masterGain.connect(ctx.destination);
+
+        await Promise.all(Object.entries(TRACKS).map(async ([key, t]) => {
+            try {
+                const res    = await fetch(t.file);
+                const arr    = await res.arrayBuffer();
+                const buffer = await ctx.decodeAudioData(arr);
+                state[key].buffer = buffer;
+
+                const gain = ctx.createGain();
+                gain.gain.value = parseFloat(document.getElementById(t.id).value);
+                gain.connect(masterGain);
+                state[key].gainNode = gain;
+            } catch(e) {
+                console.warn(`rain player: failed to load ${t.file}`, e);
+            }
+        }));
+    }
+
+    /* ── Create and start a BufferSourceNode for a track ── */
+    function startSource(key) {
+        const t = TRACKS[key];
+        const s = state[key];
+        if (!s.buffer || !s.gainNode) return;
+        const source  = ctx.createBufferSource();
+        source.buffer = s.buffer;
+        source.loop   = t.loop;
+        source.connect(s.gainNode);
+        source.start(0);
+        s.source = source;
+    }
+
+    /* ── Stop a track's source node ── */
+    function stopSource(key) {
+        const s = state[key];
+        if (s.source) {
+            try { s.source.stop(); } catch(_) {}
+            s.source = null;
+        }
+    }
+
+    /* ── Thunder scheduling ── */
     function scheduleThunder() {
         const delay = 20000 + Math.random() * 40000;
         thunderTimer = setTimeout(() => {
             if (!playing) return;
-            const a = tracks.thunder.audio;
-            a.currentTime = 0;
-            a.play();
+            stopSource('thunder');
+            startSource('thunder');
             scheduleThunder();
         }, delay);
     }
 
+    /* ── Play / pause ── */
     const btn = document.getElementById('rain-btn');
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
         if (!playing) {
-            tracks.rain.audio.play();
-            tracks.wind.audio.play();
+            // First play — init context and load buffers
+            if (!ctx) {
+                btn.querySelector('i').className = 'ph-light ph-spinner';
+                await initAudio();
+            }
+            // Resume if suspended (browser autoplay policy)
+            if (ctx.state === 'suspended') await ctx.resume();
+
+            startSource('rain');
+            startSource('wind');
             scheduleThunder();
+
             btn.querySelector('i').className = 'ph-light ph-stop';
             btn.classList.add('playing');
             playing = true;
         } else {
-            tracks.rain.audio.pause();
-            tracks.wind.audio.pause();
-            tracks.thunder.audio.pause();
+            stopSource('rain');
+            stopSource('wind');
+            stopSource('thunder');
             clearTimeout(thunderTimer);
+            thunderTimer = null;
+
             btn.querySelector('i').className = 'ph-light ph-play';
             btn.classList.remove('playing');
             playing = false;
         }
     });
 
-    // Master volume
-    let masterVol = 1;
-    document.getElementById('vol-master').addEventListener('input', e => {
-        masterVol = parseFloat(e.target.value);
-        Object.values(tracks).forEach(t => {
-            const trackVol = parseFloat(document.getElementById(t.id).value);
-            t.audio.volume = trackVol * masterVol;
-        });
+    /* ── Resume on tab focus if playing ── */
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && playing && ctx) {
+            if (ctx.state === 'suspended') ctx.resume();
+        }
     });
 
-    // Volume sliders
-    Object.entries(tracks).forEach(([key, t]) => {
+    /* ── Master volume ── */
+    document.getElementById('vol-master').addEventListener('input', e => {
+        if (masterGain) masterGain.gain.value = parseFloat(e.target.value);
+    });
+
+    /* ── Per-track volume ── */
+    Object.entries(TRACKS).forEach(([key, t]) => {
         document.getElementById(t.id).addEventListener('input', e => {
-            t.audio.volume = parseFloat(e.target.value) * masterVol;
+            if (state[key].gainNode) state[key].gainNode.gain.value = parseFloat(e.target.value);
         });
     });
 })();
@@ -271,7 +342,23 @@ document.getElementById('clock').addEventListener('click', () => {
     binaryClock = !binaryClock;
     const el = document.getElementById('clock');
     el.classList.toggle('binary', binaryClock);
-    if (!binaryClock) el.innerHTML = '';
+    const now = new Date();
+    const rawH = now.getHours();
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    if (binaryClock) {
+        renderBinary(rawH, m, window._clockSeconds ? s : null);
+    } else {
+        el.innerHTML = '';
+        let h = rawH, suffix = '';
+        if (window._clockFormat === '12h') {
+            suffix = h >= 12 ? ' PM' : ' AM';
+            h = h % 12 || 12;
+        }
+        el.textContent = window._clockSeconds
+            ? `${pad(h)}:${pad(m)}:${pad(s)}${suffix}`
+            : `${pad(h)}:${pad(m)}${suffix}`;
+    }
 });
 
 // Defaults — applySettings will overwrite these from storage.
@@ -333,7 +420,7 @@ document.getElementById('search-input').addEventListener('keydown', e => {
         const q = e.target.value.trim();
         if (!q) return;
         const url = activeEngine.dataset.url + encodeURIComponent(q);
-        window.open(url, '_blank');
+        window.open(url, '_self');
         e.target.value = '';
     }
 });
@@ -723,7 +810,7 @@ async function loadBookmarks() {
         folder.links.forEach((link, li) => {
             const a = document.createElement('a');
             a.href = link.url;
-            a.target = '_blank';
+            a.target = '_self';
             a.className = 'fav-tile';
             a.draggable = true;
             a.dataset.dragIndex = li;
@@ -818,7 +905,7 @@ async function loadRecent() {
         rtUrl.textContent = item.url;
         tile.appendChild(rtName);
         tile.appendChild(rtUrl);
-        tile.addEventListener('click', () => window.open(item.url, '_blank'));
+        tile.addEventListener('click', () => window.open(item.url, '_self'));
 
         const x = document.createElement('button');
         x.className = 'recent-x';
@@ -866,7 +953,7 @@ async function loadQuickAccess() {
 
     items.forEach((item, i) => {
         const a = document.createElement('a');
-        a.href = item.url; a.target = '_blank';
+        a.href = item.url; a.target = '_self';
         a.draggable = true;
         a.dataset.dragIndex = i;
         const favImg = document.createElement('img');
@@ -924,20 +1011,8 @@ document.getElementById('qa-add-btn').addEventListener('click', async () => {
 });
 
 /* ── QUOTES ──────────────────────────────────────────────────── */
-/* QUOTES array is defined in data/quotes.js */
-
-const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-document.getElementById('quote-text').textContent   = q.text;
-document.getElementById('quote-author').textContent = q.author;
-
-let quoteIndex = QUOTES.indexOf(q);
-document.getElementById('quote-next').addEventListener('click', () => {
-    let idx;
-    do { idx = Math.floor(Math.random() * QUOTES.length); } while (idx === quoteIndex);
-    quoteIndex = idx;
-    document.getElementById('quote-text').textContent   = QUOTES[idx].text;
-    document.getElementById('quote-author').textContent = QUOTES[idx].author;
-});
+/* Initial quotes seeded from QUOTE_DEFAULTS in data/defaults.js */
+/* then live in nt_custom_quotes storage. Rendered by section 9. */
 
 /* ── KANJI WORD OF THE DAY ───────────────────────────────────── */
 /* WORDS array is defined in data/words.js */
@@ -947,7 +1022,7 @@ function renderWord(w) {
     el.innerHTML = '';
     const a = document.createElement('a');
     a.href = 'https://jisho.org/search/' + encodeURIComponent(w.k) + '%20%23kanji';
-    a.target = '_blank';
+    a.target = '_self';
     a.style.cssText = 'color:inherit;text-decoration:none;';
     a.textContent = w.k;
     el.appendChild(a);
@@ -1108,9 +1183,9 @@ document.addEventListener('keydown', e => {
 
     /* ── 5. FONTS ── */
     const FONT_MAP_LATIN = {
+        'inter':           "'Inter', sans-serif",
         'share-tech-mono': "'Share Tech Mono', monospace",
         'vt323':           "'VT323', monospace",
-        'courier-prime':   "'Courier Prime', monospace",
     };
     const FONT_MAP_JP = {
         'dotgothic16':   "'DotGothic16', monospace",
@@ -1123,20 +1198,19 @@ document.addEventListener('keydown', e => {
         'oxanium':  "'Oxanium', monospace",
     };
 
-    const fontLatin = _get('nt_font_latin');
+    const fontLatin = _get('nt_font_latin') || 'inter';
     const fontJp    = _get('nt_font_jp');
-    const fontClock = _get('nt_font_clock');
+    const fontClock = _get('nt_font_clock') || 'orbitron';
 
-    if (fontLatin && FONT_MAP_LATIN[fontLatin]) {
+    if (FONT_MAP_LATIN[fontLatin]) {
         document.documentElement.style.setProperty('--font-pixel',
             `${FONT_MAP_LATIN[fontLatin]}, ${FONT_MAP_JP[fontJp] || "'DotGothic16', monospace"}`);
     } else if (fontJp && FONT_MAP_JP[fontJp]) {
         document.documentElement.style.setProperty('--font-pixel',
             `'DotGothic16', ${FONT_MAP_JP[fontJp]}`);
     }
-    if (fontClock && FONT_MAP_CLOCK[fontClock]) {
+    if (FONT_MAP_CLOCK[fontClock]) {
         document.documentElement.style.setProperty('--font-doto', FONT_MAP_CLOCK[fontClock]);
-        // Apply per-font size class to body so both #clock and .timer-input/.timer-sep scale correctly
         document.body.classList.remove('font-medodica', 'font-orbitron', 'font-oxanium');
         document.body.classList.add(`font-${fontClock}`);
     }
@@ -1196,9 +1270,8 @@ document.addEventListener('keydown', e => {
         // 'theme' — no class, color follows --white which tracks the page theme
     }
 
-    /* ── 7. SEARCH ENGINES + TARGET ── */
-    const engines      = _get('nt_engines');
-    const searchTarget = _get('nt_search_target') || '_blank';
+    /* ── 7. SEARCH ENGINES ── */
+    const engines = _get('nt_engines');
 
     if (engines && engines.length > 0) {
         const bar = document.querySelector('.engine-bar') || document.querySelector('.search-engines');
@@ -1216,26 +1289,8 @@ document.addEventListener('keydown', e => {
                 });
                 bar.appendChild(btn);
             });
-            // reset activeEngine to the new default
             activeEngine = bar.querySelector('.engine-btn.active') || bar.querySelector('.engine-btn');
         }
-    }
-
-    // Patch search to respect target
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        // Remove old listener by cloning; re-add with correct target
-        const newInput = searchInput.cloneNode(true);
-        searchInput.parentNode.replaceChild(newInput, searchInput);
-        newInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                const q = e.target.value.trim();
-                if (!q) return;
-                const url = (activeEngine?.dataset?.url || 'https://duckduckgo.com/?q=') + encodeURIComponent(q);
-                window.open(url, searchTarget);
-                e.target.value = '';
-            }
-        });
     }
 
     /* ── 8. JLPT FILTER on word widget ── */
@@ -1260,13 +1315,30 @@ document.addEventListener('keydown', e => {
     }
 
     /* ── 9. CUSTOM QUOTES ── */
-    const customQuotes = _get('nt_custom_quotes');
-    if (customQuotes && customQuotes.length > 0) {
-        const q = customQuotes[Math.floor(Math.random() * customQuotes.length)];
+    let customQuotes = _get('nt_custom_quotes');
+    if (!customQuotes) {
+        customQuotes = QUOTE_DEFAULTS;
+        await Store.set('nt_custom_quotes', customQuotes);
+    }
+    if (customQuotes.length > 0) {
+        let quoteIndex = Math.floor(Math.random() * customQuotes.length);
         const textEl   = document.getElementById('quote-text');
         const authorEl = document.getElementById('quote-author');
-        if (textEl)   textEl.textContent   = q.text;
-        if (authorEl) authorEl.textContent = q.author;
+        const renderQuote = idx => {
+            if (textEl)   textEl.textContent   = customQuotes[idx].text;
+            if (authorEl) authorEl.textContent = customQuotes[idx].author;
+        };
+        renderQuote(quoteIndex);
+        const nextBtn = document.getElementById('quote-next');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                let idx;
+                do { idx = Math.floor(Math.random() * customQuotes.length); }
+                while (idx === quoteIndex && customQuotes.length > 1);
+                quoteIndex = idx;
+                renderQuote(idx);
+            });
+        }
     }
 
     /* ── 10. WIDGET LAYOUT (col, order, visibility) ── */

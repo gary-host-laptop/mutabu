@@ -55,7 +55,6 @@ let titleLang     = 'ja';
 let userLocation  = { city: '', lat: '', lon: '' };
 let username      = '';
 let bgBlur        = true;
-let searchTarget  = '_blank';
 let clockFormat   = '24h';
 let clockSeconds  = true;
 let jlptLevel     = 'all';
@@ -63,9 +62,9 @@ let customQuotes  = null; // null = use defaults
 
 /* ── FONT DEFINITIONS ────────────────────────────────────────── */
 const FONTS_LATIN = [
+    { id: 'inter',           name: 'Inter',           family: "'Inter', sans-serif" },
     { id: 'share-tech-mono', name: 'Share Tech Mono', family: "'Share Tech Mono', monospace" },
     { id: 'vt323',           name: 'VT323',           family: "'VT323', monospace" },
-    { id: 'courier-prime',   name: 'Courier Prime',   family: "'Courier Prime', monospace" },
 ];
 
 const FONTS_JP = [
@@ -81,9 +80,9 @@ const FONTS_CLOCK = [
 ];
 
 /* ── FONT STATE ──────────────────────────────────────────────── */
-let fontLatin = 'share-tech-mono';
+let fontLatin = 'inter';
 let fontJp    = 'dotgothic16';
-let fontClock = 'medodica';
+let fontClock = 'orbitron';
 
 /* ── THEME PICKER ────────────────────────────────────────────── */
 function renderTheme() {
@@ -703,11 +702,6 @@ function renderBgBlur() {
     renderToggleGroup('bg-blur-group', bgBlur, v => { bgBlur = v === 'true'; });
 }
 
-/* ── SEARCH TARGET ───────────────────────────────────────────── */
-function renderSearchTarget() {
-    renderToggleGroup('search-target-group', searchTarget, v => { searchTarget = v; });
-}
-
 /* ── CLOCK FORMAT AND SECONDS ────────────────────────────────── */
 function renderClockDisplay() {
     renderToggleGroup('clock-format-group',  clockFormat,   v => { clockFormat  = v; });
@@ -720,8 +714,7 @@ function renderJlpt() {
 }
 
 /* ── QUOTES ──────────────────────────────────────────────────── */
-/* QUOTE_DEFAULTS — use QUOTES from data/quotes.js */
-const QUOTE_DEFAULTS = QUOTES;
+/* QUOTE_DEFAULTS is defined in data/defaults.js.                */
 const MAX_QUOTES = 10;
 
 function renderQuoteList() {
@@ -873,7 +866,7 @@ document.getElementById('save-quote-btn').addEventListener('click', () => {
 });
 
 /* ── EXPORT / IMPORT / RESET ─────────────────────────────────── */
-function getAllSettings() {
+async function getAllSettings() {
     return {
         nt_profile_images: profileImages,
         nt_bg_images:      bgImages,
@@ -888,16 +881,19 @@ function getAllSettings() {
         nt_font_jp:        fontJp,
         nt_font_clock:     fontClock,
         nt_bg_blur:        bgBlur,
-        nt_search_target:  searchTarget,
         nt_clock_format:   clockFormat,
         nt_clock_seconds:  clockSeconds,
         nt_jlpt_level:     jlptLevel,
         nt_custom_quotes:  customQuotes,
+        nt_quick:          await Store.get('nt_quick'),
+        nt_bookmarks:      await Store.get('nt_bookmarks'),
+        nt_recent:         await Store.get('nt_recent'),
+        nt_notes:          await Store.get('nt_notes'),
     };
 }
 
-document.getElementById('export-btn').addEventListener('click', () => {
-    const data = JSON.stringify(getAllSettings(), null, 2);
+document.getElementById('export-btn').addEventListener('click', async () => {
+    const data = JSON.stringify(await getAllSettings(), null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
@@ -933,7 +929,7 @@ document.getElementById('import-file').addEventListener('change', async e => {
 
 document.getElementById('reset-btn').addEventListener('click', async () => {
     if (!confirm('Reset all settings to defaults? This cannot be undone.')) return;
-    const keys = Object.keys(getAllSettings());
+    const keys = Object.keys(await getAllSettings());
     for (const key of keys) {
         if (typeof browser !== 'undefined' && browser.storage) {
             await browser.storage.local.remove(key);
@@ -963,7 +959,6 @@ async function saveSettings() {
         nt_font_jp:        fontJp,
         nt_font_clock:     fontClock,
         nt_bg_blur:        bgBlur,
-        nt_search_target:  searchTarget,
         nt_clock_format:   clockFormat,
         nt_clock_seconds:  clockSeconds,
         nt_jlpt_level:     jlptLevel,
@@ -989,11 +984,10 @@ async function init() {
     titleLang     = (await Store.get('nt_title_lang'))     || 'ja';
     userLocation = (await Store.get('nt_location')) || { city: '', lat: '', lon: '' };
     username     = (await Store.get('nt_username')) || '';
-    fontLatin    = (await Store.get('nt_font_latin')) || 'share-tech-mono';
+    fontLatin    = (await Store.get('nt_font_latin')) || 'inter';
     fontJp       = (await Store.get('nt_font_jp'))    || 'dotgothic16';
-    fontClock    = (await Store.get('nt_font_clock')) || 'medodica';
+    fontClock    = (await Store.get('nt_font_clock')) || 'orbitron';
     bgBlur       = (await Store.get('nt_bg_blur'))       ?? true;
-    searchTarget = (await Store.get('nt_search_target')) || '_blank';
     clockFormat  = (await Store.get('nt_clock_format'))  || '24h';
     clockSeconds = (await Store.get('nt_clock_seconds')) ?? true;
     jlptLevel    = (await Store.get('nt_jlpt_level'))    || 'all';
@@ -1013,7 +1007,6 @@ async function init() {
     renderClockTheme();
     renderClockDisplay();
     renderBgBlur();
-    renderSearchTarget();
     renderJlpt();
     renderQuoteList();
     renderLayoutTable();

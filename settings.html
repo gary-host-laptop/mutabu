@@ -64,7 +64,7 @@
     <!-- APPEARANCE -->
     <div class="section">
         <div class="section-title">
-            <div class="st-bar green"></div>
+            <div class="st-bar pink"></div>
             <span class="st-label">appearance</span>
         </div>
         <div class="section-body">
@@ -116,7 +116,7 @@
             <span class="st-label">widgets</span>
         </div>
         <div class="section-body">
-            <div class="option-label" style="margin-bottom:10px;">layout</div>
+            <div class="subsection-label" style="margin-top:0;border-top:none;">layout</div>
             <table class="layout-table" id="layout-table" style="margin-bottom:24px;">
                 <thead>
                     <tr>
@@ -129,7 +129,7 @@
                 <tbody id="layout-tbody"></tbody>
             </table>
 
-            <div class="option-label" style="margin-bottom:12px;">clock</div>
+            <div class="subsection-label">clock</div>
             <div class="option-label">color mode</div>
             <div class="option-group" id="clock-theme-group" style="margin-bottom:16px;">
                 <button class="option-btn" data-value="theme">follow theme</button>
@@ -155,8 +155,8 @@
             <div class="option-label">clock &amp; timer font</div>
             <select class="font-select" id="font-clock-select" style="margin-bottom:24px;"></select>
 
+            <div class="subsection-label" style="margin-bottom:10px;">quotes</div>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                <div class="option-label" style="margin-bottom:0;">quotes</div>
                 <span id="quote-count" style="font-size:10px;color:var(--dimmer);letter-spacing:1px;"></span>
                 <button class="btn" id="quote-manage-btn" style="margin-left:auto;font-size:10px;padding:3px 10px;">manage ›</button>
             </div>
@@ -179,8 +179,9 @@
                 </div>
             </div>
 
-            <div class="option-label">words · jlpt filter</div>
-            <div class="option-group" id="jlpt-group">
+            <div class="subsection-label">words</div>
+            <div class="option-label">jlpt filter</div>
+            <div class="option-group" id="jlpt-group" style="margin-bottom:24px;">
                 <button class="option-btn" data-value="n1">N1</button>
                 <button class="option-btn" data-value="n2">N2</button>
                 <button class="option-btn" data-value="n3">N3</button>
@@ -188,22 +189,8 @@
                 <button class="option-btn" data-value="n5">N5</button>
                 <button class="option-btn" data-value="all">ALL</button>
             </div>
-        </div>
-    </div>
 
-    <!-- SEARCH -->
-    <div class="section">
-        <div class="section-title">
-            <div class="st-bar blue"></div>
-            <span class="st-label">search</span>
-        </div>
-        <div class="section-body">
-            <div class="option-label">open results in</div>
-            <div class="option-group" id="search-target-group" style="margin-bottom:16px;">
-                <button class="option-btn" data-value="_blank">new tab</button>
-                <button class="option-btn" data-value="_self">same tab</button>
-            </div>
-
+            <div class="subsection-label">search</div>
             <div class="option-label" style="margin-bottom:10px;">engines</div>
             <div class="engine-list" id="engine-list"></div>
             <button class="btn primary" id="add-engine-btn">+ add engine</button>
@@ -228,7 +215,7 @@
     <!-- DATA -->
     <div class="section">
         <div class="section-title">
-            <div class="st-bar green"></div>
+            <div class="st-bar red"></div>
             <span class="st-label">data</span>
         </div>
         <div class="section-body" style="display:flex;flex-direction:column;gap:10px;">

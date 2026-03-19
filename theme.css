@@ -25,6 +25,8 @@ body.theme-dark {
     --accent3:   #90d870;
     --red:       #f28080;
     --titlebar:  #0e0d16;
+    --font-pixel: 'Inter', sans-serif;
+    --font-doto:  'Orbitron', monospace;
 }
 
 /* ── LIGHT ────────────────────────────────────────────────────── */
