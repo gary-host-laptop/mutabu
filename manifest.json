@@ -12,6 +12,9 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
+  "chrome_settings_overrides": {
+    "homepage": "newtab.html"
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "mutabu@extension",
