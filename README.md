@@ -1,6 +1,6 @@
 <div align="center">
   <img src="./icons/icon-128.png" width="128px" />
-  <h1>無タブ ·mutabu</h1>
+  <h1>無タブ · mutabu</h1>
 </div>
 
 Minimal, customisable Firefox new tab page. Dark/light themes, bookmarks, ambient rain sounds, Japanese word of the day, clock, notes, and more. Licensed under AGPL-3.0.
