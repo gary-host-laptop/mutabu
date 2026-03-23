@@ -4,47 +4,47 @@
 
 @font-face {
     font-family: 'DotGothic16';
-    src: url('fonts/DotGothic16-Regular.ttf') format('truetype');
+    src: url('assets/fonts/DotGothic16-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
 }
 @font-face {
     font-family: 'Medodica';
-    src: url('fonts/MedodicaRegular.otf') format('opentype');
+    src: url('assets/fonts/MedodicaRegular.otf') format('opentype');
     font-weight: 400;
     font-style: normal;
 }
 @font-face {
     font-family: 'Orbitron';
-    src: url('fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
+    src: url('assets/fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
 }
 @font-face {
     font-family: 'Oxanium';
-    src: url('fonts/Oxanium-VariableFont_wght.ttf') format('truetype');
+    src: url('assets/fonts/Oxanium-VariableFont_wght.ttf') format('truetype');
 }
 @font-face {
     font-family: 'Share Tech Mono';
-    src: url('fonts/ShareTechMono-Regular.ttf') format('truetype');
+    src: url('assets/fonts/ShareTechMono-Regular.ttf') format('truetype');
 }
 @font-face {
     font-family: 'VT323';
-    src: url('fonts/VT323-Regular.ttf') format('truetype');
+    src: url('assets/fonts/VT323-Regular.ttf') format('truetype');
 }
 @font-face {
     font-family: 'Inter';
-    src: url('fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('assets/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
 }
 @font-face {
     font-family: 'BIZ UDGothic';
-    src: url('fonts/BIZUDGothic-Regular.ttf') format('truetype');
+    src: url('assets/fonts/BIZUDGothic-Regular.ttf') format('truetype');
     font-weight: 400;
 }
 @font-face {
     font-family: 'BIZ UDGothic';
-    src: url('fonts/BIZUDGothic-Bold.ttf') format('truetype');
+    src: url('assets/fonts/BIZUDGothic-Bold.ttf') format('truetype');
     font-weight: 700;
 }
 @font-face {
     font-family: 'Noto Sans JP';
-    src: url('fonts/NotoSansJP-VariableFont_wght.ttf') format('truetype');
+    src: url('assets/fonts/NotoSansJP-VariableFont_wght.ttf') format('truetype');
 }

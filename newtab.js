@@ -5,7 +5,7 @@
     const secInput  = document.getElementById('timer-sec');
     const startBtn  = document.getElementById('timer-start');
     const resetBtn  = document.getElementById('timer-reset');
-    const alarm     = new Audio('sounds/alarm.mp3');
+    const alarm     = new Audio('assets/sounds/alarm.mp3');
 
     let total    = 0;
     let remaining = 0;
@@ -83,9 +83,9 @@
 /* ── RAIN PLAYER ─────────────────────────────────────────────── */
 (function() {
     const TRACKS = {
-        rain:    { file: 'sounds/heavy-rain.mp3', loop: true,  id: 'vol-rain'    },
-        wind:    { file: 'sounds/wind.mp3',        loop: true,  id: 'vol-wind'    },
-        thunder: { file: 'sounds/thunder.mp3',     loop: false, id: 'vol-thunder' },
+        rain:    { file: 'assets/sounds/heavy-rain.mp3', loop: true,  id: 'vol-rain'    },
+        wind:    { file: 'assets/sounds/wind.mp3',        loop: true,  id: 'vol-wind'    },
+        thunder: { file: 'assets/sounds/thunder.mp3',     loop: false, id: 'vol-thunder' },
     };
 
     let ctx        = null;   // AudioContext — created on first play (autoplay policy)

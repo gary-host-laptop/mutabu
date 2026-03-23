@@ -5,9 +5,9 @@
   "description": "custom new tab page",
   "permissions": ["geolocation", "storage"],
   "icons": {
-    "48": "icons/icon-48.png",
-    "96": "icons/icon-96.png",
-    "128": "icons/icon-128.png"
+    "48": "assets/icons/icon-48.png",
+    "96": "assets/icons/icon-96.png",
+    "128": "assets/icons/icon-128.png"
   },
   "chrome_url_overrides": {
     "newtab": "newtab.html"
