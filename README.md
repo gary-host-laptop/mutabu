@@ -5,13 +5,13 @@
 
 Minimal, customisable Firefox new tab page. Dark/light themes, bookmarks, ambient rain sounds, Japanese word of the day, clock, notes, and more. Licensed under AGPL-3.0.
 
-<img src="./assets/screenshot-mutabu.png" />
+<img src="./assets/images/screenshot-mutabu.png" />
 
 ## Installation
 
 ### From Mozilla Add-ons (recommended)
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/%E7%84%A1%E3%82%BF%E3%83%96-mutabu/">
-  <img width="25%" height="25%" alt="get the add-on button" src="https://github.com/user-attachments/assets/446dd89f-d3a5-4100-9c0b-c40b295015ec" />
+  <img width="25%" height="25%" alt="get the add-on button" src="./assets/images/add-on.png" />
 </a>
 
 1. Click "Get the Add-On"
