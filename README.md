@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./icons/icon-128.png" width="128px" />
+  <img src="./assets/icons/icon-128.png" width="128px" />
   <h1>無タブ · mutabu</h1>
 </div>
 
