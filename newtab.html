@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title>無 · new tab</title>
-    <link rel="stylesheet" href="phosphor-light.css">
+    <script>document.documentElement.classList.add('theme-' + (localStorage.getItem('nt_theme') || 'dark'));</script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="phosphor-light.css">
     <link rel="stylesheet" href="newtab.css">
+    <style id="preload-hide">body { opacity: 0 !important; }</style>
 </head>
 <body class="font-orbitron">
 <div id="bg"></div>
@@ -70,7 +71,7 @@
                 <div class="widget-title">
                     <div class="wt-bar green"></div>
                     <span class="wt-label" data-widget-label="timer">タイマー</span>
-                    <button class="wt-act" id="timer-reset"><i class="ph-light ph-arrow-counter-clockwise"></i></button>
+                    <button class="wt-act" id="timer-trash" title="clear timer"><i class="ph-light ph-trash"></i></button>
                     <button class="wt-act" id="timer-start"><i class="ph-light ph-play"></i></button>
                 </div>
                 <div class="timer-display" id="timer-display">00:00</div>
@@ -260,7 +261,6 @@
 <script src="i18n.js"></script>
 <script src="data/defaults.js"></script>
 <script src="data/words.js"></script>
-<script src="data/quotes.js"></script>
 <script src="newtab.js"></script>
 </body>
 </html>

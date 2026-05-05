@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="540"
+   height="540"
+   viewBox="0 0 540 540"
+   version="1.1"
+   id="svg10"
+   sodipodi:docname="favicon.svg"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs10" />
+  <sodipodi:namedview
+     id="namedview10"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="1.4814815"
+     inkscape:cx="268.65"
+     inkscape:cy="284.85"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg10">
+    <inkscape:grid
+       id="grid10"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" />
+  </sodipodi:namedview>
+  <circle
+     cx="270"
+     cy="270"
+     r="270"
+     fill="#18180f"
+     id="circle1" />
+  <g
+     stroke="#ffffff"
+     stroke-linecap="square"
+     stroke-linejoin="round"
+     fill="none"
+     id="g10">
+    <!-- top horizontal bar -->
+    <line
+       x1="125"
+       y1="138"
+       x2="415"
+       y2="138"
+       stroke-width="46"
+       id="line1" />
+    <!-- second horizontal bar -->
+    <line
+       x1="125"
+       y1="228"
+       x2="415"
+       y2="228"
+       stroke-width="40"
+       id="line2" />
+    <!-- left vertical, descending from second bar -->
+    <line
+       x1="175"
+       y1="228"
+       x2="175"
+       y2="328"
+       stroke-width="40"
+       id="line3" />
+    <!-- right vertical, descending from second bar -->
+    <line
+       x1="365"
+       y1="228"
+       x2="365"
+       y2="328"
+       stroke-width="40"
+       id="line4" />
+    <!-- center box top (connects the two verticals) -->
+    <line
+       x1="175"
+       y1="278"
+       x2="365"
+       y2="278"
+       stroke-width="36"
+       id="line5" />
+    <!-- third horizontal bar -->
+    <line
+       x1="125"
+       y1="328"
+       x2="415"
+       y2="328"
+       stroke-width="40"
+       id="line6" />
+    <!-- bottom four marks (灬), short angled strokes -->
+    <line
+       x1="158.5"
+       y1="380"
+       x2="151.5"
+       y2="440"
+       stroke-width="36"
+       id="line7" />
+    <line
+       x1="228.5"
+       y1="380"
+       x2="225.5"
+       y2="440"
+       stroke-width="36"
+       id="line8" />
+    <line
+       x1="318.5"
+       y1="380"
+       x2="321.5"
+       y2="440"
+       stroke-width="36"
+       id="line9" />
+    <line
+       x1="388.5"
+       y1="380"
+       x2="395.5"
+       y2="440"
+       stroke-width="36"
+       id="line10" />
+  </g>
+</svg>

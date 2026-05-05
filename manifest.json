@@ -15,6 +15,7 @@
   "chrome_settings_overrides": {
     "homepage": "newtab.html"
   },
+  "content_security_policy": "script-src 'self' 'wasm-unsafe-eval' 'sha256-ywbDkG9Fbd5ba8A0Z+66qw/xbtCjs586tbiqlS6qKWU='; object-src 'self'",
   "browser_specific_settings": {
     "gecko": {
       "id": "mutabu@extension",
