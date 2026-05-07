@@ -539,8 +539,7 @@ function tick() {
       `${DAYS[now.getDay()].toUpperCase()} · ${MONTHS[now.getMonth()].toUpperCase()} ${now.getDate()} · ${now.getFullYear()}`;
 
     document.getElementById("day-name").textContent = getDayOfYear(now);
-    document.getElementById("week-num").textContent =
-      `W${pad(getWeekNum(now))}`;
+    document.getElementById("week-num").textContent = getWeekNum(now);
     document.getElementById("year-progress").textContent = getYearProgress(now);
   }
 }
@@ -1130,6 +1129,9 @@ async function loadRecent() {
     tile.appendChild(rtName);
     tile.appendChild(rtUrl);
     tile.addEventListener("click", () => window.open(item.url, "_self"));
+    tile.addEventListener("auxclick", (e) => {
+      if (e.button === 1) window.open(item.url, "_blank");
+    });
 
     const x = document.createElement("button");
     x.className = "recent-x";
@@ -1290,6 +1292,38 @@ document.getElementById("kanji-next").addEventListener("click", () => {
   renderWord(WORDS[wordIndex]);
 });
 
+/* ── FOOTER ──────────────────────────────────────────────────── */
+function renderFooter() {
+  const footer = document.querySelector(".page-footer");
+  if (!footer) return;
+  const label = "BUILT WITH SOLIDARITY";
+  const manifest = browser.runtime.getManifest();
+  const version = `無タブ · v${manifest.version}`;
+  const style = getComputedStyle(footer);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.font = `${style.fontSize} ${style.fontFamily}`;
+  const charWidth = ctx.measureText("━").width;
+  const iconWidth = 20;
+  const page = document.querySelector(".page");
+  const pageStyle = getComputedStyle(page);
+  const pagePadding =
+    parseFloat(pageStyle.paddingLeft) + parseFloat(pageStyle.paddingRight);
+  const available =
+    Math.min(footer.clientWidth, 1100) - pagePadding - iconWidth;
+  const fixedText = `┗━ · ━━━━ · ${label} · ━━━━[● ● ●]━━━━ · ${version} · ━━━━ · ━┛`;
+  const fixedWidth = ctx.measureText(fixedText).width;
+  const fillChars = Math.max(
+    0,
+    Math.floor((available - fixedWidth) / charWidth),
+  );
+  const pad = "━".repeat(fillChars);
+  const dots = `[<span class="footer-dot dot-1">●</span> <span class="footer-dot dot-2">●</span> <span class="footer-dot dot-3">●</span>]`;
+  footer.innerHTML = `┗━ · ━━━━ · <a href="https://github.com/gary-host-laptop/mutabu" target="_blank" class="footer-gh"><i class="ph-light ph-github-logo"></i></a> ${label} · ━━━━${pad}${dots}━━━━ · ${version} · ━━━━ · ━┛`;
+}
+document.fonts.ready.then(() => renderFooter());
+window.addEventListener("resize", renderFooter);
+
 /* ── FOCUS SEARCH ON KEYPRESS ────────────────────────────────── */
 document.addEventListener("keydown", (e) => {
   const el = document.getElementById("search-input");
@@ -1309,350 +1343,370 @@ document.addEventListener("keydown", (e) => {
 /* ── SETTINGS WIRING ─────────────────────────────────────────── */
 /* Reads all nt_* keys from storage on load and applies them.     */
 (async function applySettings() {
-  /* ── BATCH STORAGE READ — single call instead of many ── */
-  const all = await Store.getAll();
-  const _get = (key) => (all[key] !== undefined ? all[key] : null);
+  try {
+    /* ── BATCH STORAGE READ — single call instead of many ── */
+    const all = await Store.getAll();
+    const _get = (key) => (all[key] !== undefined ? all[key] : null);
 
-  /* ── THEME GUARD — re-apply in case localStorage was cleared ── */
-  const storedTheme = localStorage.getItem("nt_theme") || "dark";
-  document.body.className = document.body.className
-    .replace(/\btheme-\S+/g, "")
-    .trim();
-  document.body.classList.add("theme-" + storedTheme);
+    /* ── THEME GUARD — re-apply in case localStorage was cleared ── */
+    const storedTheme = localStorage.getItem("nt_theme") || "dark";
+    document.body.className = document.body.className
+      .replace(/\btheme-\S+/g, "")
+      .trim();
+    document.body.classList.add("theme-" + storedTheme);
 
-  /* ── helpers ── */
-  function fetchTemp(lat, lon) {
-    const el = document.getElementById("temperature");
-    fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`,
-    )
-      .then((r) => r.json())
-      .then((d) => {
-        el.textContent = `${d.current_weather.temperature}°C`;
-      })
-      .catch(() => {
-        el.textContent = "n/a";
-      });
-  }
-
-  /* ── 1. BACKGROUND IMAGE ── */
-  const bgImages = _get("nt_bg_images");
-  if (bgImages && bgImages.length > 0) {
-    const pick = bgImages[Math.floor(Math.random() * bgImages.length)];
-    const bgEl = document.getElementById("bg");
-    if (bgEl) {
-      const bgBlur = _get("nt_bg_blur");
-      const img = document.createElement("img");
-      img.src = pick.dataUrl;
-      img.alt = "";
-      bgEl.innerHTML = "";
-      bgEl.appendChild(img);
-      bgEl.classList.toggle("blurred", bgBlur !== false);
+    /* ── helpers ── */
+    function fetchTemp(lat, lon) {
+      const el = document.getElementById("temperature");
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`,
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          el.textContent = `${d.current_weather.temperature}°C`;
+        })
+        .catch(() => {
+          el.textContent = "n/a";
+        });
     }
-  }
 
-  /* ── 2. PROFILE IMAGES ── */
-  const profImages = _get("nt_profile_images");
-  const wrap = document.getElementById("profile-img-wrap");
-  if (wrap) {
-    wrap.innerHTML = "";
+    /* ── 1. BACKGROUND IMAGE ── */
+    const bgImages = _get("nt_bg_images");
+    if (bgImages && bgImages.length > 0) {
+      const pick = bgImages[Math.floor(Math.random() * bgImages.length)];
+      const bgEl = document.getElementById("bg");
+      if (bgEl) {
+        const bgBlur = _get("nt_bg_blur");
+        const img = document.createElement("img");
+        img.src = pick.dataUrl;
+        img.alt = "";
+        bgEl.innerHTML = "";
+        bgEl.appendChild(img);
+        bgEl.classList.toggle("blurred", bgBlur !== false);
+      }
+    }
+
+    /* ── 2. PROFILE IMAGES (header avatar) ── */
+    const profImages = _get("nt_profile_images");
     if (profImages && profImages.length > 0) {
       const activeIdx = Math.floor(Math.random() * profImages.length);
-      profImages.forEach((img, i) => {
-        const el = document.createElement("img");
-        el.id = `prof-img-${i}`;
-        el.src = img.dataUrl;
-        el.alt = "";
-        if (i === activeIdx) el.classList.add("active");
-        wrap.appendChild(el);
-      });
-    }
-    // if no images, wrap stays empty — no broken images shown
-  }
-
-  /* ── 3. LANGUAGE + USERNAME ── */
-  const uiLang = _get("nt_ui_lang") || "en";
-  const titleLang = _get("nt_title_lang") || "ja";
-  const username = _get("nt_username");
-
-  // Store uiLang globally so tick() can use it for greetings
-  window._uiLang = uiLang;
-
-  // Username with lang-aware fallback
-  const usernameEl = document.getElementById("username");
-  if (usernameEl) {
-    usernameEl.textContent = username || t(titleLang).username_fallback;
-  }
-
-  // Widget titles
-  // Widget titles — from i18n.js tw()
-  const titles = tw(titleLang);
-  document.querySelectorAll(".wt-label[data-widget-label]").forEach((label) => {
-    const key = label.dataset.widgetLabel;
-    if (titles[key]) label.textContent = titles[key];
-  });
-
-  // UI strings — from i18n.js t()
-  const ui = t(uiLang);
-  const searchEl = document.getElementById("search-input");
-  if (searchEl) searchEl.placeholder = ui.search_placeholder;
-  const notesEl = document.getElementById("notes-area");
-  if (notesEl) notesEl.placeholder = ui.notes_placeholder;
-
-  // Refresh greeting immediately with correct lang
-  const nowH = new Date().getHours();
-  greetingSet = getGreetingStrings(nowH, window._uiLang);
-  const greetEl = document.getElementById("greeting");
-  if (greetEl)
-    setGreeting(
-      greetEl,
-      greetingSet[Math.floor(Math.random() * greetingSet.length)],
-    );
-
-  /* ── 4. LOCATION / TEMPERATURE ── */
-  const location = _get("nt_location");
-  if (location && location.lat && location.lon) {
-    fetchTemp(location.lat, location.lon);
-  } else if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => fetchTemp(pos.coords.latitude, pos.coords.longitude),
-      () => {
-        const el = document.getElementById("temperature");
-        if (el) el.textContent = "n/a";
-      },
-    );
-  } else {
-    const el = document.getElementById("temperature");
-    if (el) el.textContent = "n/a";
-  }
-
-  /* ── 5. FONTS ── */
-  const FONT_MAP_LATIN = {
-    inter: "'Inter', sans-serif",
-    "share-tech-mono": "'Share Tech Mono', monospace",
-    vt323: "'VT323', monospace",
-  };
-  const FONT_MAP_JP = {
-    dotgothic16: "'DotGothic16', monospace",
-    "biz-udgothic": "'BIZ UDGothic', sans-serif",
-    "noto-sans-jp": "'Noto Sans JP', sans-serif",
-  };
-  const FONT_MAP_CLOCK = {
-    medodica: "'Medodica', monospace",
-    orbitron: "'Orbitron', monospace",
-    oxanium: "'Oxanium', monospace",
-  };
-
-  const fontLatin = _get("nt_font_latin") || "inter";
-  const fontJp = _get("nt_font_jp");
-  const fontClock = _get("nt_font_clock") || "orbitron";
-
-  if (FONT_MAP_LATIN[fontLatin]) {
-    document.documentElement.style.setProperty(
-      "--font-pixel",
-      `${FONT_MAP_LATIN[fontLatin]}, ${FONT_MAP_JP[fontJp] || "'DotGothic16', monospace"}`,
-    );
-  } else if (fontJp && FONT_MAP_JP[fontJp]) {
-    document.documentElement.style.setProperty(
-      "--font-pixel",
-      `'DotGothic16', ${FONT_MAP_JP[fontJp]}`,
-    );
-  }
-  if (FONT_MAP_CLOCK[fontClock]) {
-    document.documentElement.style.setProperty(
-      "--font-doto",
-      FONT_MAP_CLOCK[fontClock],
-    );
-    document.body.classList.remove(
-      "font-medodica",
-      "font-orbitron",
-      "font-oxanium",
-    );
-    document.body.classList.add(`font-${fontClock}`);
-  }
-
-  /* ── 6. CLOCK FORMAT & SECONDS ── */
-  const clockFormat = _get("nt_clock_format"); // '24h' | '12h'
-  const clockSeconds = _get("nt_clock_seconds"); // true | false
-  const clockTheme = _get("nt_clock_theme"); // 'theme' | 'light' | 'dark'
-
-  // Restore binary clock state
-  if (_get("nt_clock_binary")) {
-    binaryClock = true;
-    const now = new Date();
-    const clockEl = document.getElementById("clock");
-    clockEl.classList.add("binary");
-    renderBinary(now.getHours(), now.getMinutes(), now.getSeconds());
-  }
-
-  // Clear the original tick interval, replace with settings-aware one
-  clearInterval(window._tickInterval);
-  window._clockFormat = clockFormat || "24h";
-  window._clockSeconds = clockSeconds !== false;
-
-  // Re-wire tick to respect settings
-  function tickWithSettings() {
-    const now = new Date();
-    const rawH = now.getHours();
-    const m = now.getMinutes();
-    const s = now.getSeconds();
-
-    if (binaryClock) {
-      // Binary always 24h; pass null for s when hiding seconds
-      renderBinary(rawH, m, window._clockSeconds ? s : null);
-    } else {
-      let h = rawH;
-      let suffix = "";
-      if (window._clockFormat === "12h") {
-        suffix = h >= 12 ? " PM" : " AM";
-        h = h % 12 || 12;
+      const avatarEl = document.getElementById("header-avatar");
+      if (avatarEl) {
+        avatarEl.innerHTML = "";
+        const av = document.createElement("img");
+        av.src = profImages[activeIdx].dataUrl;
+        av.alt = "";
+        avatarEl.appendChild(av);
       }
-      document.getElementById("clock").textContent = window._clockSeconds
-        ? `${pad(h)}:${pad(m)}:${pad(s)}${suffix}`
-        : `${pad(h)}:${pad(m)}${suffix}`;
     }
 
-    if (rawH !== lastHour) {
-      lastHour = rawH;
-      greetingSet = getGreetingStrings(rawH, window._uiLang || "en");
+    /* ── 2b. WIDGET IMAGES ── */
+    const widgetImgs = _get("nt_widget_images");
+    const wrap = document.getElementById("widget-img-wrap");
+    if (wrap) {
+      wrap.innerHTML = "";
+      if (widgetImgs && widgetImgs.length > 0) {
+        const widgetActiveIdx = Math.floor(Math.random() * widgetImgs.length);
+        widgetImgs.forEach((img, i) => {
+          const el = document.createElement("img");
+          el.src = img.dataUrl;
+          el.alt = "";
+          if (i === widgetActiveIdx) el.classList.add("active");
+          wrap.appendChild(el);
+        });
+      }
+    }
+
+    /* ── 3. LANGUAGE + USERNAME ── */
+    const uiLang = _get("nt_ui_lang") || "en";
+    const titleLang = _get("nt_title_lang") || "ja";
+    const username = _get("nt_username");
+
+    // Store uiLang globally so tick() can use it for greetings
+    window._uiLang = uiLang;
+
+    // Username with lang-aware fallback
+    const usernameEl = document.getElementById("username");
+    if (usernameEl) {
+      usernameEl.textContent = username || t(titleLang).username_fallback;
+    }
+
+    // Widget titles
+    // Widget titles — from i18n.js tw()
+    const titles = tw(titleLang);
+    document
+      .querySelectorAll(".wt-label[data-widget-label]")
+      .forEach((label) => {
+        const key = label.dataset.widgetLabel;
+        if (titles[key]) label.textContent = titles[key];
+      });
+
+    // UI strings — from i18n.js t()
+    const ui = t(uiLang);
+    const searchEl = document.getElementById("search-input");
+    if (searchEl) searchEl.placeholder = ui.search_placeholder;
+    const notesEl = document.getElementById("notes-area");
+    if (notesEl) notesEl.placeholder = ui.notes_placeholder;
+
+    // Refresh greeting immediately with correct lang
+    const nowH = new Date().getHours();
+    greetingSet = getGreetingStrings(nowH, window._uiLang);
+    const greetEl = document.getElementById("greeting");
+    if (greetEl)
       setGreeting(
-        document.getElementById("greeting"),
+        greetEl,
         greetingSet[Math.floor(Math.random() * greetingSet.length)],
       );
-      document.getElementById("date").textContent =
-        `${DAYS[now.getDay()].toUpperCase()} · ${MONTHS[now.getMonth()].toUpperCase()} ${now.getDate()} · ${now.getFullYear()}`;
-      document.getElementById("day-name").textContent = getDayOfYear(now);
-      document.getElementById("week-num").textContent =
-        `W${pad(getWeekNum(now))}`;
-      document.getElementById("year-progress").textContent =
-        getYearProgress(now);
+
+    /* ── 4. LOCATION / TEMPERATURE ── */
+    const location = _get("nt_location");
+    if (location && location.lat && location.lon) {
+      fetchTemp(location.lat, location.lon);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchTemp(pos.coords.latitude, pos.coords.longitude),
+        () => {
+          const el = document.getElementById("temperature");
+          if (el) el.textContent = "n/a";
+        },
+      );
+    } else {
+      const el = document.getElementById("temperature");
+      if (el) el.textContent = "n/a";
     }
-  }
-  window._tickInterval = setInterval(tickWithSettings, 1000);
-  tickWithSettings();
 
-  const clockEl = document.getElementById("clock");
-  if (clockEl) {
-    clockEl.classList.remove("force-light", "force-dark");
-    if (clockTheme === "light") clockEl.classList.add("force-light");
-    else if (clockTheme === "dark") clockEl.classList.add("force-dark");
-    // 'theme' — no class, color follows --white which tracks the page theme
-  }
+    /* ── 5. FONTS ── */
+    const FONT_MAP_LATIN = {
+      inter: "'Inter', sans-serif",
+      "share-tech-mono": "'Share Tech Mono', monospace",
+      vt323: "'VT323', monospace",
+    };
+    const FONT_MAP_JP = {
+      dotgothic16: "'DotGothic16', monospace",
+      "biz-udgothic": "'BIZ UDGothic', sans-serif",
+      "noto-sans-jp": "'Noto Sans JP', sans-serif",
+    };
+    const FONT_MAP_CLOCK = {
+      medodica: "'Medodica', monospace",
+      orbitron: "'Orbitron', monospace",
+      oxanium: "'Oxanium', monospace",
+    };
 
-  /* ── 7. SEARCH ENGINES ── */
-  const engines = _get("nt_engines");
+    const fontLatin = _get("nt_font_latin") || "inter";
+    const fontJp = _get("nt_font_jp");
+    document.body.classList.add("font-orbitron");
+    const fontClock = "orbitron";
 
-  if (engines && engines.length > 0) {
-    const bar =
-      document.querySelector(".engine-bar") ||
-      document.querySelector(".search-engines");
-    if (bar) {
-      bar.innerHTML = "";
-      engines.forEach((eng) => {
-        const btn = document.createElement("button");
-        btn.className = "engine-btn" + (eng.isDefault ? " active" : "");
-        btn.dataset.url = eng.url;
-        btn.textContent = eng.name;
-        btn.addEventListener("click", () => {
-          document
-            .querySelectorAll(".engine-btn")
-            .forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          activeEngine = btn;
+    if (FONT_MAP_LATIN[fontLatin]) {
+      document.documentElement.style.setProperty(
+        "--font-pixel",
+        `${FONT_MAP_LATIN[fontLatin]}, ${FONT_MAP_JP[fontJp] || "'DotGothic16', monospace"}`,
+      );
+    } else if (fontJp && FONT_MAP_JP[fontJp]) {
+      document.documentElement.style.setProperty(
+        "--font-pixel",
+        `'DotGothic16', ${FONT_MAP_JP[fontJp]}`,
+      );
+    }
+    if (FONT_MAP_CLOCK[fontClock]) {
+      document.documentElement.style.setProperty(
+        "--font-doto",
+        FONT_MAP_CLOCK[fontClock],
+      );
+      document.body.classList.remove(
+        "font-medodica",
+        "font-orbitron",
+        "font-oxanium",
+      );
+      document.body.classList.add(`font-${fontClock}`);
+    }
+
+    /* ── 6. CLOCK FORMAT & SECONDS ── */
+    const clockFormat = _get("nt_clock_format"); // '24h' | '12h'
+    const clockSeconds = _get("nt_clock_seconds"); // true | false
+    const clockTheme = _get("nt_clock_theme"); // 'theme' | 'light' | 'dark'
+
+    // Restore binary clock state
+    if (_get("nt_clock_binary")) {
+      binaryClock = true;
+      const now = new Date();
+      const clockEl = document.getElementById("clock");
+      clockEl.classList.add("binary");
+      renderBinary(now.getHours(), now.getMinutes(), now.getSeconds());
+    }
+
+    // Clear the original tick interval, replace with settings-aware one
+    clearInterval(window._tickInterval);
+    window._clockFormat = clockFormat || "24h";
+    window._clockSeconds = clockSeconds !== false;
+
+    // Re-wire tick to respect settings
+    function tickWithSettings() {
+      const now = new Date();
+      const rawH = now.getHours();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+
+      if (binaryClock) {
+        // Binary always 24h; pass null for s when hiding seconds
+        renderBinary(rawH, m, window._clockSeconds ? s : null);
+      } else {
+        let h = rawH;
+        let suffix = "";
+        if (window._clockFormat === "12h") {
+          suffix = h >= 12 ? " PM" : " AM";
+          h = h % 12 || 12;
+        }
+        document.getElementById("clock").textContent = window._clockSeconds
+          ? `${pad(h)}:${pad(m)}:${pad(s)}${suffix}`
+          : `${pad(h)}:${pad(m)}${suffix}`;
+      }
+
+      if (rawH !== lastHour) {
+        lastHour = rawH;
+        greetingSet = getGreetingStrings(rawH, window._uiLang || "en");
+        setGreeting(
+          document.getElementById("greeting"),
+          greetingSet[Math.floor(Math.random() * greetingSet.length)],
+        );
+        document.getElementById("date").textContent =
+          `${DAYS[now.getDay()].toUpperCase()} · ${MONTHS[now.getMonth()].toUpperCase()} ${now.getDate()} · ${now.getFullYear()}`;
+        document.getElementById("day-name").textContent = getDayOfYear(now);
+        document.getElementById("week-num").textContent = getWeekNum(now);
+        document.getElementById("year-progress").textContent =
+          getYearProgress(now);
+      }
+    }
+    window._tickInterval = setInterval(tickWithSettings, 1000);
+    tickWithSettings();
+
+    const clockEl = document.getElementById("clock");
+    if (clockEl) {
+      clockEl.classList.remove("force-light", "force-dark");
+      if (clockTheme === "light") clockEl.classList.add("force-light");
+      else if (clockTheme === "dark") clockEl.classList.add("force-dark");
+      // 'theme' — no class, color follows --white which tracks the page theme
+    }
+
+    /* ── 7. SEARCH ENGINES ── */
+    const engines = _get("nt_engines");
+
+    if (engines && engines.length > 0) {
+      const bar =
+        document.querySelector(".engine-bar") ||
+        document.querySelector(".search-engines");
+      if (bar) {
+        bar.innerHTML = "";
+        engines.forEach((eng) => {
+          const btn = document.createElement("button");
+          btn.className = "engine-btn" + (eng.isDefault ? " active" : "");
+          btn.dataset.url = eng.url;
+          btn.textContent = eng.name;
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".engine-btn")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeEngine = btn;
+          });
+          bar.appendChild(btn);
         });
-        bar.appendChild(btn);
-      });
-      activeEngine =
-        bar.querySelector(".engine-btn.active") ||
-        bar.querySelector(".engine-btn");
+        activeEngine =
+          bar.querySelector(".engine-btn.active") ||
+          bar.querySelector(".engine-btn");
+      }
     }
-  }
 
-  /* ── 8. JLPT FILTER on word widget ── */
-  const jlptLevel = _get("nt_jlpt_level") || "all";
-  if (jlptLevel !== "all") {
-    const filtered = WORDS.filter((w) => w.l === jlptLevel);
-    if (filtered.length > 0) {
-      wordIndex = Math.floor(Math.random() * filtered.length);
-      renderWord(filtered[wordIndex]);
-      const nextBtn = document.getElementById("kanji-next");
+    /* ── 8. JLPT FILTER on word widget ── */
+    const jlptLevel = _get("nt_jlpt_level") || "all";
+    if (jlptLevel !== "all") {
+      const filtered = WORDS.filter((w) => w.l === jlptLevel);
+      if (filtered.length > 0) {
+        wordIndex = Math.floor(Math.random() * filtered.length);
+        renderWord(filtered[wordIndex]);
+        const nextBtn = document.getElementById("kanji-next");
+        if (nextBtn) {
+          const newBtn = nextBtn.cloneNode(true);
+          nextBtn.parentNode.replaceChild(newBtn, nextBtn);
+          newBtn.addEventListener("click", () => {
+            let idx;
+            do {
+              idx = Math.floor(Math.random() * filtered.length);
+            } while (idx === wordIndex && filtered.length > 1);
+            wordIndex = idx;
+            renderWord(filtered[wordIndex]);
+          });
+        }
+      }
+    }
+
+    /* ── 9. CUSTOM QUOTES ── */
+    let customQuotes = _get("nt_custom_quotes");
+    if (!customQuotes) {
+      customQuotes = QUOTE_DEFAULTS;
+      await Store.set("nt_custom_quotes", customQuotes);
+    }
+    if (customQuotes.length > 0) {
+      let quoteIndex = Math.floor(Math.random() * customQuotes.length);
+      const textEl = document.getElementById("quote-text");
+      const authorEl = document.getElementById("quote-author");
+      const renderQuote = (idx) => {
+        if (textEl) textEl.textContent = customQuotes[idx].text;
+        if (authorEl) authorEl.textContent = customQuotes[idx].author;
+      };
+      renderQuote(quoteIndex);
+      const nextBtn = document.getElementById("quote-next");
       if (nextBtn) {
-        const newBtn = nextBtn.cloneNode(true);
-        nextBtn.parentNode.replaceChild(newBtn, nextBtn);
-        newBtn.addEventListener("click", () => {
+        nextBtn.addEventListener("click", () => {
           let idx;
           do {
-            idx = Math.floor(Math.random() * filtered.length);
-          } while (idx === wordIndex && filtered.length > 1);
-          wordIndex = idx;
-          renderWord(filtered[wordIndex]);
+            idx = Math.floor(Math.random() * customQuotes.length);
+          } while (idx === quoteIndex && customQuotes.length > 1);
+          quoteIndex = idx;
+          renderQuote(idx);
         });
       }
     }
-  }
 
-  /* ── 9. CUSTOM QUOTES ── */
-  let customQuotes = _get("nt_custom_quotes");
-  if (!customQuotes) {
-    customQuotes = QUOTE_DEFAULTS;
-    await Store.set("nt_custom_quotes", customQuotes);
-  }
-  if (customQuotes.length > 0) {
-    let quoteIndex = Math.floor(Math.random() * customQuotes.length);
-    const textEl = document.getElementById("quote-text");
-    const authorEl = document.getElementById("quote-author");
-    const renderQuote = (idx) => {
-      if (textEl) textEl.textContent = customQuotes[idx].text;
-      if (authorEl) authorEl.textContent = customQuotes[idx].author;
-    };
-    renderQuote(quoteIndex);
-    const nextBtn = document.getElementById("quote-next");
-    if (nextBtn) {
-      nextBtn.addEventListener("click", () => {
-        let idx;
-        do {
-          idx = Math.floor(Math.random() * customQuotes.length);
-        } while (idx === quoteIndex && customQuotes.length > 1);
-        quoteIndex = idx;
-        renderQuote(idx);
+    /* ── 10. WIDGET LAYOUT (col, order, visibility) ── */
+    const layout = _get("nt_widget_layout");
+    if (layout && layout.length > 0) {
+      const cols = {
+        left: document.getElementById("col-left"),
+        center: document.getElementById("col-center"),
+        right: document.getElementById("col-right"),
+      };
+
+      // Group by column, sorted by order
+      const byCol = { left: [], center: [], right: [] };
+      layout.forEach((w) => {
+        const el = document.querySelector(`[data-widget="${w.id}"]`);
+        if (!el) return;
+        if (w.visible === false) {
+          el.style.display = "none";
+          return;
+        }
+        el.style.display = "";
+        const col = byCol[w.col] || byCol.left;
+        col.push({ order: w.order, el });
+      });
+
+      // Append widgets to their column in order
+      ["left", "center", "right"].forEach((colKey) => {
+        const colEl = cols[colKey];
+        if (!colEl) return;
+        byCol[colKey]
+          .sort((a, b) => a.order - b.order)
+          .forEach(({ el }) => colEl.appendChild(el));
       });
     }
+
+    /* ── REVEAL PAGE — remove preload hide now that all settings are applied ── */
+  } catch (e) {
+    console.error("applySettings failed:", e);
+  } finally {
+    /* ── REVEAL PAGE — always remove preload hide ── */
+    const preloadHide = document.getElementById("preload-hide");
+    if (preloadHide) preloadHide.remove();
   }
-
-  /* ── 10. WIDGET LAYOUT (col, order, visibility) ── */
-  const layout = _get("nt_widget_layout");
-  if (layout && layout.length > 0) {
-    const cols = {
-      left: document.getElementById("col-left"),
-      center: document.getElementById("col-center"),
-      right: document.getElementById("col-right"),
-    };
-
-    // Group by column, sorted by order
-    const byCol = { left: [], center: [], right: [] };
-    layout.forEach((w) => {
-      const el = document.querySelector(`[data-widget="${w.id}"]`);
-      if (!el) return;
-      if (w.visible === false) {
-        el.style.display = "none";
-        return;
-      }
-      el.style.display = "";
-      const col = byCol[w.col] || byCol.left;
-      col.push({ order: w.order, el });
-    });
-
-    // Append widgets to their column in order
-    ["left", "center", "right"].forEach((colKey) => {
-      const colEl = cols[colKey];
-      if (!colEl) return;
-      byCol[colKey]
-        .sort((a, b) => a.order - b.order)
-        .forEach(({ el }) => colEl.appendChild(el));
-    });
-  }
-
-  /* ── REVEAL PAGE — remove preload hide now that all settings are applied ── */
-  const preloadHide = document.getElementById("preload-hide");
-  if (preloadHide) preloadHide.remove();
 })();

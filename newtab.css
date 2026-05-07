@@ -83,9 +83,8 @@ a:hover {
     margin: 0 auto;
     padding: 24px 20px 40px;
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto 1fr auto;
     gap: 16px;
-    min-height: 100vh;
 }
 
 /* ─── HEADER ROW ────────────────────────────────────── */
@@ -96,6 +95,54 @@ a:hover {
     gap: 20px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 14px;
+}
+
+#header-avatar-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+}
+#header-avatar {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+#header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.av-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    z-index: 2;
+    pointer-events: none;
+}
+.av-corner.tl {
+    top: -3px;
+    left: -3px;
+    border-top: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+}
+.av-corner.tr {
+    top: -3px;
+    right: -3px;
+    border-top: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+}
+.av-corner.bl {
+    bottom: -3px;
+    left: -3px;
+    border-bottom: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+}
+.av-corner.br {
+    bottom: -3px;
+    right: -3px;
+    border-bottom: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
 }
 
 .clock-block {
@@ -226,17 +273,28 @@ body.font-oxanium .timer-sep {
 
 .header-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 12px;
     font-size: 11px;
     color: var(--dimmer);
     letter-spacing: 1px;
 }
 
-.header-right span {
+.header-right-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 90px;
+}
+
+.header-name-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
     color: var(--accent2);
-    font-size: 13px;
 }
 
 .header-btns {
@@ -335,6 +393,7 @@ body.font-oxanium .timer-sep {
     overflow: hidden;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
+    min-width: 0;
     clip-path: polygon(
         0 0,
         100% 0,
@@ -677,6 +736,22 @@ a.fav-tile span {
     color: var(--dimmer);
 }
 
+.widget-img-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 12px;
+}
+.widget-img-wrap img {
+    display: none;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+.widget-img-wrap img.active {
+    display: block;
+}
+
 /* ─── WEATHER / STATUS BLOCK ────────────────────────── */
 .status-rows {
     display: flex;
@@ -710,9 +785,13 @@ a.fav-tile span {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    width: 100%;
 }
 
 .recent-tile {
+    min-width: 0;
     background: var(--panel2);
     border: 1px solid var(--border);
     padding: 8px;
@@ -752,6 +831,7 @@ a.fav-tile span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
 }
 
 /* ─── QUOTE ─────────────────────────────────────────── */
@@ -784,6 +864,8 @@ a.fav-tile span {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-width: 0;
+    overflow: visible;
 }
 
 /* ─── DIVIDER ───────────────────────────────────────── */
@@ -836,6 +918,12 @@ a.fav-tile span {
         color 0.1s,
         border-color 0.1s,
         background 0.1s;
+}
+
+.header-deco {
+    font-size: 14px;
+    color: var(--white);
+    letter-spacing: 0.01em;
 }
 
 /* ─── EDIT TOGGLE BUTTON ───────────────────────────────── */
@@ -959,14 +1047,15 @@ a.fav-tile {
 
 /* ✎ + in folder summary bar — hidden until edit mode */
 .folder-head-btns {
-    display: none;
+    visibility: hidden;
+    display: flex;
     margin-left: auto;
     align-items: center;
     gap: 0;
     flex-shrink: 0;
 }
 body.edit-mode .folder-head-btns {
-    display: flex;
+    visibility: visible;
 }
 
 .folder-head-btn {
@@ -1131,7 +1220,7 @@ body.edit-mode .recent-add-tile {
 }
 
 /* ─── PROFILE WIDGET ────────────────────────────────── */
-.profile-widget {
+.image-widget {
     position: relative;
     overflow: hidden;
 }
@@ -1419,19 +1508,28 @@ body.edit-mode .recent-add-tile {
     color: var(--dimmer);
 }
 
+#rqa-btn span {
+    margin-top: -3px;
+}
+
 .recent-quick-add button {
     background: none;
     border: 1px solid var(--border);
     color: var(--dimmer);
     font-family: var(--font-pixel);
     font-size: 14px;
-    padding: 4px 10px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
     cursor: pointer;
-    line-height: 1;
+    line-height: 26px;
     transition:
         color 0.1s,
         border-color 0.1s;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .recent-quick-add button:hover {
@@ -1500,4 +1598,71 @@ body.edit-mode .recent-add-tile {
 ::selection {
     background: rgba(138, 180, 248, 0.25);
     color: var(--white);
+}
+
+.page-footer {
+    width: 100%;
+    font-family: monospace;
+    font-size: 11px;
+    text-align: center;
+    padding: 12px 0 8px;
+    box-sizing: border-box;
+    color: var(--dim);
+    position: relative;
+    z-index: 4;
+}
+
+.footer-gh {
+    color: var(--dim);
+    text-decoration: none;
+    vertical-align: middle;
+    font-size: 16px;
+}
+.footer-gh:hover {
+    color: var(--accent);
+}
+
+@keyframes dot1 {
+    0%,
+    59% {
+        opacity: 1;
+    }
+    60%,
+    100% {
+        opacity: 0.15;
+    }
+}
+@keyframes dot2 {
+    0%,
+    19% {
+        opacity: 0.15;
+    }
+    20%,
+    79% {
+        opacity: 1;
+    }
+    80%,
+    100% {
+        opacity: 0.15;
+    }
+}
+@keyframes dot3 {
+    0%,
+    39% {
+        opacity: 0.15;
+    }
+    40%,
+    100% {
+        opacity: 1;
+    }
+}
+
+.footer-dot.dot-1 {
+    animation: dot1 2.5s steps(1) infinite;
+}
+.footer-dot.dot-2 {
+    animation: dot2 2.5s steps(1) infinite;
+}
+.footer-dot.dot-3 {
+    animation: dot3 2.5s steps(1) infinite;
 }

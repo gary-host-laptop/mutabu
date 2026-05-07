@@ -52,6 +52,7 @@ const ENGINE_DEFAULTS = [
 /* ── STATE ───────────────────────────────────────────────────── */
 let currentTheme = localStorage.getItem("nt_theme") || "dark";
 let profileImages = []; // array of {id, dataUrl} up to 5
+let widgetImages = [];
 let bgImages = []; // array of {id, dataUrl} up to 3
 let engines = [];
 let clockTheme = "theme";
@@ -165,9 +166,6 @@ function renderFonts() {
   renderFontSelect("font-jp-select", FONTS_JP, fontJp, (v) => {
     fontJp = v;
   });
-  renderFontSelect("font-clock-select", FONTS_CLOCK, fontClock, (v) => {
-    fontClock = v;
-  });
 }
 
 /* ── WIDGET LAYOUT DEFAULTS ──────────────────────────────────── */
@@ -179,7 +177,7 @@ const WIDGET_DEFAULTS = [
   { id: "bookmarks", col: "center", order: 1, visible: true },
   { id: "notes", col: "center", order: 2, visible: true },
   { id: "recently-visited", col: "center", order: 3, visible: true },
-  { id: "profile", col: "right", order: 1, visible: true },
+  { id: "image", col: "right", order: 1, visible: true },
   { id: "status", col: "right", order: 2, visible: true },
   { id: "kotoba", col: "right", order: 3, visible: true },
 ];
@@ -549,6 +547,74 @@ function renderProfileGrid() {
     // Click slot → trigger hidden file input
     slot.addEventListener("click", () => fileInput.click());
 
+    grid.appendChild(slot);
+  }
+}
+
+/* ── WIDGET IMAGES ──────────────────────────────────────────── */
+function renderWidgetImageGrid() {
+  const grid = document.getElementById("widget-img-grid");
+  grid.innerHTML = "";
+  widgetImages.forEach((img, i) => {
+    const slot = document.createElement("div");
+    slot.className = "profile-slot filled";
+    const imgEl = document.createElement("img");
+    imgEl.src = img.dataUrl;
+    slot.appendChild(imgEl);
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "slot-remove";
+    removeBtn.textContent = "×";
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      widgetImages.splice(i, 1);
+      renderWidgetImageGrid();
+      saveSettings();
+    });
+    slot.appendChild(removeBtn);
+    grid.appendChild(slot);
+  });
+  if (widgetImages.length < 3) {
+    const slot = document.createElement("div");
+    slot.className = "profile-slot";
+    const plus = document.createElement("div");
+    plus.className = "slot-plus";
+    plus.textContent = "+";
+    slot.appendChild(plus);
+    const label = document.createElement("div");
+    label.className = "slot-label";
+    label.textContent = "add image";
+    slot.appendChild(label);
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.style.display = "none";
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const dataUrl = await processUpload(
+        file,
+        "widget-img-upload-error",
+        (canvas, imgEl) => {
+          const maxSide = 800;
+          const scale = Math.min(
+            1,
+            maxSide / Math.max(imgEl.width, imgEl.height),
+          );
+          canvas.width = Math.round(imgEl.width * scale);
+          canvas.height = Math.round(imgEl.height * scale);
+          canvas
+            .getContext("2d")
+            .drawImage(imgEl, 0, 0, canvas.width, canvas.height);
+        },
+        "png",
+      );
+      if (!dataUrl) return;
+      widgetImages.push({ id: Date.now(), dataUrl });
+      renderWidgetImageGrid();
+      saveSettings();
+    });
+    slot.appendChild(fileInput);
+    slot.addEventListener("click", () => fileInput.click());
     grid.appendChild(slot);
   }
 }
@@ -964,6 +1030,7 @@ document.getElementById("save-quote-btn").addEventListener("click", () => {
 async function getAllSettings() {
   return {
     nt_profile_images: profileImages,
+    nt_widget_images: widgetImages,
     nt_bg_images: bgImages,
     nt_engines: engines,
     nt_clock_theme: clockTheme,
@@ -974,7 +1041,6 @@ async function getAllSettings() {
     nt_username: document.getElementById("username-input").value.trim(),
     nt_font_latin: fontLatin,
     nt_font_jp: fontJp,
-    nt_font_clock: fontClock,
     nt_bg_blur: bgBlur,
     nt_clock_format: clockFormat,
     nt_clock_seconds: clockSeconds,
@@ -1059,6 +1125,7 @@ async function saveSettings() {
     nt_clock_seconds: clockSeconds,
     nt_jlpt_level: jlptLevel,
     nt_custom_quotes: customQuotes,
+    nt_widget_images: widgetImages,
   };
   if (typeof browser !== "undefined" && browser.storage) {
     await browser.storage.local.set(data);
@@ -1072,6 +1139,7 @@ async function saveSettings() {
 /* ── INIT ────────────────────────────────────────────────────── */
 async function init() {
   profileImages = (await Store.get("nt_profile_images")) || [];
+  widgetImages = (await Store.get("nt_widget_images")) || [];
   bgImages = (await Store.get("nt_bg_images")) || [];
   engines =
     (await Store.get("nt_engines")) || ENGINE_DEFAULTS.map((e) => ({ ...e }));
@@ -1079,6 +1147,9 @@ async function init() {
   widgetLayout =
     (await Store.get("nt_widget_layout")) ||
     WIDGET_DEFAULTS.map((w) => ({ ...w }));
+  widgetLayout = widgetLayout.map((w) =>
+    w.id === "profile" ? { ...w, id: "image" } : w,
+  );
   uiLang = (await Store.get("nt_ui_lang")) || "en";
   titleLang = (await Store.get("nt_title_lang")) || "ja";
   userLocation = (await Store.get("nt_location")) || {
@@ -1089,7 +1160,6 @@ async function init() {
   username = (await Store.get("nt_username")) || "";
   fontLatin = (await Store.get("nt_font_latin")) || "inter";
   fontJp = (await Store.get("nt_font_jp")) || "dotgothic16";
-  fontClock = (await Store.get("nt_font_clock")) || "orbitron";
   bgBlur = (await Store.get("nt_bg_blur")) ?? true;
   clockFormat = (await Store.get("nt_clock_format")) || "24h";
   clockSeconds = (await Store.get("nt_clock_seconds")) ?? true;
@@ -1104,6 +1174,7 @@ async function init() {
   });
   renderTheme();
   renderProfileGrid();
+  renderWidgetImageGrid();
   renderBgGrid();
   renderFonts();
   renderLanguage();

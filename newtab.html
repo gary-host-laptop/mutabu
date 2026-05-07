@@ -1,266 +1,428 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>無 · new tab</title>
-    <script>document.documentElement.classList.add('theme-' + (localStorage.getItem('nt_theme') || 'dark'));</script>
-    <link rel="stylesheet" href="theme.css">
-    <link rel="stylesheet" href="fonts.css">
-    <link rel="stylesheet" href="phosphor-light.css">
-    <link rel="stylesheet" href="newtab.css">
-    <style id="preload-hide">body { opacity: 0 !important; }</style>
-</head>
-<body class="font-orbitron">
-<div id="bg"></div>
-<div id="crt"></div>
-<div id="ctx-menu"></div>
-<div class="page">
-
-    <!-- ── HEADER ─────────────────────────────────────────── -->
-    <header class="header">
-        <div class="clock-block">
-            <div id="clock">00:00:00</div>
-            <div id="date">loading...</div>
-        </div>
-        <div class="header-right">
-            <span id="greeting">こんにちは</span>
-            <span id="username"></span>
-            <div class="header-btns">
-                <button id="edit-toggle" title="edit mode"><i class="ph-light ph-pencil-simple"></i></button>
-                <button id="settings-btn" title="settings"><i class="ph-light ph-gear-six"></i></button>
-            </div>
-        </div>
-    </header>
-
-    <!-- ── SEARCH ─────────────────────────────────────────── -->
-    <div>
-        <div class="accent-strip"><span></span><span></span><span></span></div>
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="search..." autocomplete="off" />
-        </div>
-        <div class="search-engines">
-            <button class="engine-btn active" data-url="https://duckduckgo.com/?q=" data-name="ddg">duckduckgo</button>
-            <button class="engine-btn" data-url="https://www.youtube.com/results?search_query=" data-name="youtube">youtube</button>
-            <button class="engine-btn" data-url="https://github.com/search?q=" data-name="github">github</button>
-        </div>
-    </div>
-
-    <!-- ── MAIN GRID ───────────────────────────────────────── -->
-    <div class="grid">
-
-        <!-- LEFT COL -->
-        <div id="col-left" style="display:flex;flex-direction:column;gap:14px;">
-
-
-            <!-- QUICK ACCESS -->
-            <div class="widget" data-widget="quick-access">
-                <div class="widget-title">
-                    <div class="wt-bar blue"></div>
-                    <span class="wt-label" data-widget-label="quick-access">クイックアクセス</span>
-                    <button class="wt-btn" id="qa-add-btn"><i class="ph-light ph-plus"></i></button>
+    <head>
+        <meta charset="UTF-8" />
+        <title>無 · new tab</title>
+        <script>
+            document.documentElement.classList.add(
+                "theme-" + (localStorage.getItem("nt_theme") || "dark"),
+            );
+        </script>
+        <link rel="stylesheet" href="theme.css" />
+        <link rel="stylesheet" href="fonts.css" />
+        <link rel="stylesheet" href="phosphor-light.css" />
+        <link rel="stylesheet" href="newtab.css" />
+        <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+        <style id="preload-hide">
+            body {
+                opacity: 0 !important;
+            }
+        </style>
+    </head>
+    <body class="font-orbitron">
+        <div id="bg"></div>
+        <div id="crt"></div>
+        <div id="ctx-menu"></div>
+        <div class="page">
+            <!-- ── HEADER ─────────────────────────────────────────── -->
+            <header class="header">
+                <div class="clock-block">
+                    <div id="clock">00:00:00</div>
+                    <div id="date">loading...</div>
                 </div>
-                <div class="widget-body" style="padding:6px 10px;">
-                    <div class="quick-links">
-                        <!-- populated by JS from storage -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- TIMER -->
-            <div class="widget" data-widget="timer">
-                <div class="widget-title">
-                    <div class="wt-bar green"></div>
-                    <span class="wt-label" data-widget-label="timer">タイマー</span>
-                    <button class="wt-act" id="timer-trash" title="clear timer"><i class="ph-light ph-trash"></i></button>
-                    <button class="wt-act" id="timer-start"><i class="ph-light ph-play"></i></button>
-                </div>
-                <div class="timer-display" id="timer-display">00:00</div>
-                <div class="timer-inputs">
-                    <div>
-                        <input type="number" class="timer-input" id="timer-min" value="0" min="0" max="99" placeholder="00">
-                        <div class="timer-label">min</div>
-                    </div>
-                    <span class="timer-sep">:</span>
-                    <div>
-                        <input type="number" class="timer-input" id="timer-sec" value="0" min="0" max="59" placeholder="00">
-                        <div class="timer-label">sec</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RAIN PLAYER -->
-            <div class="widget" data-widget="rain">
-                <div class="widget-title">
-                    <div class="wt-bar blue"></div>
-                    <span class="wt-label" data-widget-label="rain">雨音</span>
-                    <button class="wt-act" id="rain-btn"><i class="ph-light ph-play"></i></button>
-                </div>
-                <div class="rain-player">
-                    <div class="rain-track rain-master">
-                        <span class="rain-track-label">vol</span>
-                        <input type="range" class="rain-slider rain-slider-master" id="vol-master" min="0" max="1" step="0.01" value="1">
-                    </div>
-                    <div class="rain-divider"></div>
-                    <div class="rain-track">
-                        <span class="rain-track-label">雨</span>
-                        <input type="range" class="rain-slider" id="vol-rain" min="0" max="1" step="0.01" value="0.7">
-                    </div>
-                    <div class="rain-track">
-                        <span class="rain-track-label">風</span>
-                        <input type="range" class="rain-slider" id="vol-wind" min="0" max="1" step="0.01" value="0.4">
-                    </div>
-                    <div class="rain-track">
-                        <span class="rain-track-label">雷</span>
-                        <input type="range" class="rain-slider" id="vol-thunder" min="0" max="1" step="0.01" value="0.5">
-                    </div>
-                </div>
-            </div>
-
-            <!-- QUOTE -->
-            <div class="widget" data-widget="quote">
-                <div class="widget-title">
-                    <div class="wt-bar blue"></div>
-                    <span class="wt-label" data-widget-label="quote">名言</span>
-                    <button class="wt-act" id="quote-next"><i class="ph-light ph-caret-right"></i></button>
-                </div>
-                <div class="widget-body" style="padding:8px;">
-                    <blockquote class="quote-block" id="quote-block">
-                        <p id="quote-text">loading...</p>
-                        <footer id="quote-author"></footer>
-                    </blockquote>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- CENTER COL -->
-        <div id="col-center" class="center-col">
-
-            <!-- BOOKMARKS -->
-            <div class="widget" data-widget="bookmarks">
-                <div class="widget-title">
-                    <div class="wt-bar red"></div>
-                    <span class="wt-label" data-widget-label="bookmarks">ブックマーク</span>
-                    <button class="wt-btn" id="bm-add-folder-btn"><i class="ph-light ph-plus"></i></button>
-                </div>
-                <div class="widget-body">
-                    <div class="folder-list" id="folder-list">
-                        <!-- populated by JS -->
-                    </div>
-                </div>
-            </div>
-            <!-- NOTES -->
-            <div class="widget" data-widget="notes">
-                <div class="widget-title">
-                    <div class="wt-bar green"></div>
-                    <span class="wt-label" data-widget-label="notes">メモ帳</span>
-                    <button class="wt-act" id="notes-clear"><i class="ph-light ph-trash"></i></button>
-                </div>
-                <div class="widget-body">
-                    <textarea id="notes" placeholder="// type here. auto-saves."></textarea>
-                </div>
-            </div>
-
-            <!-- RECENTLY VISITED (manual, editable via JS) -->
-            <div class="widget" data-widget="recently-visited">
-                <div class="widget-title">
-                    <div class="wt-bar pink"></div>
-                    <span class="wt-label" data-widget-label="recently-visited">後で見る</span>
-                </div>
-                <div class="widget-body">
-                    <div class="recent-grid" id="recent-grid">
-                        <!-- populated by JS from storage -->
-                    </div>
-                    <div class="recent-quick-add">
-                        <input type="text" id="rqa-name" placeholder="label" autocomplete="off">
-                        <input type="text" id="rqa-url"  placeholder="https://..." autocomplete="off">
-                        <button id="rqa-btn">+</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- RIGHT COL -->
-        <div id="col-right" style="display:flex;flex-direction:column;gap:14px;">
-
-            <!-- PROFILE -->
-            <div class="widget profile-widget" data-widget="profile">
-                <div class="widget-title">
-                    <div class="wt-bar red"></div>
-                    <span class="wt-label" data-widget-label="profile">プロフィール</span>
-                </div>
-                <div class="profile-inner">
-                    <div class="profile-img-wrap" id="profile-img-wrap">
-                        <!-- profile images injected by JS from storage -->
-                    </div>
-                    <div class="profile-deco">
-                        <div class="profile-deco-line"></div>
-                        <div class="profile-deco-dot dim"></div>
-                        <div class="profile-deco-dot"></div>
-                        <div class="profile-deco-dot dim"></div>
-                        <div class="profile-deco-line"></div>
-                    </div>
-                    <div class="profile-tagline" id="profile-tagline"></div>
-                </div>
-            </div>
-
-            <!-- STATUS -->
-            <div class="widget" data-widget="status">
-                <div class="widget-title">
-                    <div class="wt-bar red"></div>
-                    <span class="wt-label" data-widget-label="status">状態</span>
-                </div>
-                <div class="widget-body">
-                    <div class="status-rows">
-                        <div class="status-row">
-                            <span class="label">day</span>
-                            <span class="value" id="day-name">—</span>
+                <div class="header-right">
+                    <div class="header-right-text">
+                        <div class="header-btns">
+                            <button id="edit-toggle" title="edit mode">
+                                <i class="ph-light ph-pencil-simple"></i>
+                            </button>
+                            <button id="settings-btn" title="settings">
+                                <i class="ph-light ph-gear-six"></i>
+                            </button>
                         </div>
-                        <div class="status-row">
-                            <span class="label">week</span>
-                            <span class="value" id="week-num">—</span>
+
+                        <div class="header-name-block">
+                            <span id="greeting">こんにちは</span>
+                            <span id="username"></span>
                         </div>
-                        <div class="status-row">
-                            <span class="label">year</span>
-                            <span class="value" id="year-progress">—</span>
+
+                        <span class="header-deco">▌│█│▌│█ ▌│▌█</span>
+                    </div>
+                    <div id="header-avatar-wrap">
+                        <div id="header-avatar"></div>
+                        <span class="av-corner tl"></span>
+                        <span class="av-corner tr"></span>
+                        <span class="av-corner bl"></span>
+                        <span class="av-corner br"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ── SEARCH ─────────────────────────────────────────── -->
+            <div>
+                <div class="accent-strip">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="search-bar">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="search..."
+                        autocomplete="off"
+                    />
+                </div>
+                <div class="search-engines">
+                    <button
+                        class="engine-btn active"
+                        data-url="https://duckduckgo.com/?q="
+                        data-name="ddg"
+                    >
+                        duckduckgo
+                    </button>
+                    <button
+                        class="engine-btn"
+                        data-url="https://www.youtube.com/results?search_query="
+                        data-name="youtube"
+                    >
+                        youtube
+                    </button>
+                    <button
+                        class="engine-btn"
+                        data-url="https://github.com/search?q="
+                        data-name="github"
+                    >
+                        github
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── MAIN GRID ───────────────────────────────────────── -->
+            <div class="grid">
+                <!-- LEFT COL -->
+                <div
+                    id="col-left"
+                    style="display: flex; flex-direction: column; gap: 14px"
+                >
+                    <!-- QUICK ACCESS -->
+                    <div class="widget" data-widget="quick-access">
+                        <div class="widget-title">
+                            <div class="wt-bar blue"></div>
+                            <span
+                                class="wt-label"
+                                data-widget-label="quick-access"
+                                >クイックアクセス</span
+                            >
+                            <button class="wt-btn" id="qa-add-btn">
+                                <i class="ph-light ph-plus"></i>
+                            </button>
                         </div>
-                        <div class="status-row">
-                            <span class="label">temp</span>
-                            <span class="value" id="temperature">—</span>
+                        <div class="widget-body" style="padding: 6px 10px">
+                            <div class="quick-links">
+                                <!-- populated by JS from storage -->
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- KANJI OF THE DAY -->
-            <div class="widget" data-widget="kotoba">
-                <div class="widget-title">
-                    <div class="wt-bar pink"></div>
-                    <span class="wt-label" data-widget-label="kotoba">言葉</span>
-                    <button class="wt-act" id="kanji-next"><i class="ph-light ph-caret-right"></i></button>
-                </div>
-                <div class="kanji-block">
-                    <div class="kanji-char" id="kanji-char">語</div>
-                    <div class="kanji-reading" id="kanji-reading">ご</div>
-                    <div class="kanji-divider"></div>
-                    <div class="kanji-meta">
-                        <span class="kanji-level" id="kanji-level">N5</span>
+                    <!-- TIMER -->
+                    <div class="widget" data-widget="timer">
+                        <div class="widget-title">
+                            <div class="wt-bar green"></div>
+                            <span class="wt-label" data-widget-label="timer"
+                                >タイマー</span
+                            >
+                            <button
+                                class="wt-act"
+                                id="timer-trash"
+                                title="clear timer"
+                            >
+                                <i class="ph-light ph-trash"></i>
+                            </button>
+                            <button class="wt-act" id="timer-start">
+                                <i class="ph-light ph-play"></i>
+                            </button>
+                        </div>
+                        <div class="timer-display" id="timer-display">
+                            00:00
+                        </div>
+                        <div class="timer-inputs">
+                            <div>
+                                <input
+                                    type="number"
+                                    class="timer-input"
+                                    id="timer-min"
+                                    value="0"
+                                    min="0"
+                                    max="99"
+                                    placeholder="00"
+                                />
+                                <div class="timer-label">min</div>
+                            </div>
+                            <span class="timer-sep">:</span>
+                            <div>
+                                <input
+                                    type="number"
+                                    class="timer-input"
+                                    id="timer-sec"
+                                    value="0"
+                                    min="0"
+                                    max="59"
+                                    placeholder="00"
+                                />
+                                <div class="timer-label">sec</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kanji-meaning" id="kanji-meaning">word, language</div>
+
+                    <!-- RAIN PLAYER -->
+                    <div class="widget" data-widget="rain">
+                        <div class="widget-title">
+                            <div class="wt-bar blue"></div>
+                            <span class="wt-label" data-widget-label="rain"
+                                >雨音</span
+                            >
+                            <button class="wt-act" id="rain-btn">
+                                <i class="ph-light ph-play"></i>
+                            </button>
+                        </div>
+                        <div class="rain-player">
+                            <div class="rain-track rain-master">
+                                <span class="rain-track-label">vol</span>
+                                <input
+                                    type="range"
+                                    class="rain-slider rain-slider-master"
+                                    id="vol-master"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value="1"
+                                />
+                            </div>
+                            <div class="rain-divider"></div>
+                            <div class="rain-track">
+                                <span class="rain-track-label">雨</span>
+                                <input
+                                    type="range"
+                                    class="rain-slider"
+                                    id="vol-rain"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value="0.7"
+                                />
+                            </div>
+                            <div class="rain-track">
+                                <span class="rain-track-label">風</span>
+                                <input
+                                    type="range"
+                                    class="rain-slider"
+                                    id="vol-wind"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value="0.4"
+                                />
+                            </div>
+                            <div class="rain-track">
+                                <span class="rain-track-label">雷</span>
+                                <input
+                                    type="range"
+                                    class="rain-slider"
+                                    id="vol-thunder"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value="0.5"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUOTE -->
+                    <div class="widget" data-widget="quote">
+                        <div class="widget-title">
+                            <div class="wt-bar blue"></div>
+                            <span class="wt-label" data-widget-label="quote"
+                                >名言</span
+                            >
+                            <button class="wt-act" id="quote-next">
+                                <i class="ph-light ph-caret-right"></i>
+                            </button>
+                        </div>
+                        <div class="widget-body" style="padding: 8px">
+                            <blockquote class="quote-block" id="quote-block">
+                                <p id="quote-text">loading...</p>
+                                <footer id="quote-author"></footer>
+                            </blockquote>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- CENTER COL -->
+                <div id="col-center" class="center-col">
+                    <!-- BOOKMARKS -->
+                    <div class="widget" data-widget="bookmarks">
+                        <div class="widget-title">
+                            <div class="wt-bar red"></div>
+                            <span class="wt-label" data-widget-label="bookmarks"
+                                >ブックマーク</span
+                            >
+                            <button class="wt-btn" id="bm-add-folder-btn">
+                                <i class="ph-light ph-plus"></i>
+                            </button>
+                        </div>
+                        <div class="widget-body">
+                            <div class="folder-list" id="folder-list">
+                                <!-- populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- NOTES -->
+                    <div class="widget" data-widget="notes">
+                        <div class="widget-title">
+                            <div class="wt-bar green"></div>
+                            <span class="wt-label" data-widget-label="notes"
+                                >メモ帳</span
+                            >
+                            <button class="wt-act" id="notes-clear">
+                                <i class="ph-light ph-trash"></i>
+                            </button>
+                        </div>
+                        <div class="widget-body">
+                            <textarea
+                                id="notes"
+                                placeholder="// type here. auto-saves."
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- RECENTLY VISITED (manual, editable via JS) -->
+                    <div class="widget" data-widget="recently-visited">
+                        <div class="widget-title">
+                            <div class="wt-bar pink"></div>
+                            <span
+                                class="wt-label"
+                                data-widget-label="recently-visited"
+                                >後で見る</span
+                            >
+                        </div>
+                        <div class="widget-body">
+                            <div class="recent-grid" id="recent-grid">
+                                <!-- populated by JS from storage -->
+                            </div>
+                            <div class="recent-quick-add">
+                                <input
+                                    type="text"
+                                    id="rqa-name"
+                                    placeholder="label"
+                                    autocomplete="off"
+                                />
+                                <input
+                                    type="text"
+                                    id="rqa-url"
+                                    placeholder="https://..."
+                                    autocomplete="off"
+                                />
+                                <button id="rqa-btn"><span>+</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COL -->
+                <div
+                    id="col-right"
+                    style="display: flex; flex-direction: column; gap: 14px"
+                >
+                    <!-- PROFILE -->
+                    <div class="widget image-widget" data-widget="image">
+                        <div class="widget-title">
+                            <div class="wt-bar red"></div>
+                            <span class="wt-label" data-widget-label="image">イメージ</span>
+                        </div>
+                        <div class="widget-img-inner">
+                            <div class="widget-img-wrap" id="widget-img-wrap">
+                                <!-- widget images injected by JS from storage -->
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="widget" data-widget="status">
+                        <div class="widget-title">
+                            <div class="wt-bar red"></div>
+                            <span class="wt-label" data-widget-label="status"
+                                >状態</span
+                            >
+                        </div>
+                        <div class="widget-body">
+                            <div class="status-rows">
+                                <div class="status-row">
+                                    <span class="label">day</span>
+                                    <span class="value" id="day-name">—</span>
+                                </div>
+                                <div class="status-row">
+                                    <span class="label">week</span>
+                                    <span class="value" id="week-num">—</span>
+                                </div>
+                                <div class="status-row">
+                                    <span class="label">year</span>
+                                    <span class="value" id="year-progress"
+                                        >—</span
+                                    >
+                                </div>
+                                <div class="status-row">
+                                    <span class="label">temp</span>
+                                    <span class="value" id="temperature"
+                                        >—</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KANJI OF THE DAY -->
+                    <div class="widget" data-widget="kotoba">
+                        <div class="widget-title">
+                            <div class="wt-bar pink"></div>
+                            <span class="wt-label" data-widget-label="kotoba"
+                                >言葉</span
+                            >
+                            <button class="wt-act" id="kanji-next">
+                                <i class="ph-light ph-caret-right"></i>
+                            </button>
+                        </div>
+                        <div class="kanji-block">
+                            <div class="kanji-char" id="kanji-char">語</div>
+                            <div class="kanji-reading" id="kanji-reading">
+                                ご
+                            </div>
+                            <div class="kanji-divider"></div>
+                            <div class="kanji-meta">
+                                <span class="kanji-level" id="kanji-level"
+                                    >N5</span
+                                >
+                            </div>
+                            <div class="kanji-meaning" id="kanji-meaning">
+                                word, language
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /right col -->
             </div>
+            <!-- /grid -->
 
+            <footer class="page-footer">
+                ┗━ · ━━━━ · 🌐· BUILT WITH SOLIDARITY · ━━━━[● ● ●]━━━━ · v1.1.1
+                · ━┛
+            </footer>
+        </div>
+        <!-- /page -->
 
-
-        </div><!-- /right col -->
-
-
-</div><!-- /page -->
-
-<script src="i18n.js"></script>
-<script src="data/defaults.js"></script>
-<script src="data/words.js"></script>
-<script src="newtab.js"></script>
-</body>
+        <script src="i18n.js"></script>
+        <script src="data/defaults.js"></script>
+        <script src="data/words.js"></script>
+        <script src="newtab.js"></script>
+    </body>
 </html>
