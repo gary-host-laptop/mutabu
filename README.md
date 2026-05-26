@@ -18,7 +18,7 @@ Minimal, customisable Firefox new tab page. Dark/light themes, bookmarks, ambien
 2. Confirm permissions
 
 ### Manual install (signed)
-1. Download `mutabu-1.0.2.xpi` from the [latest release](https://github.com/gary-host-laptop/mutabu/releases/latest)
+1. Download `mutabu-x.x.x.xpi` from the [latest release](https://github.com/gary-host-laptop/mutabu/releases/latest)
 2. Open Firefox and go to `about:addons`
 3. Click the gear icon ⚙ → **Install Add-on From File**
 4. Select the downloaded `.xpi` file
