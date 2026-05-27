@@ -14,12 +14,12 @@ Minimal, customisable Firefox new tab page. Dark/light themes, bookmarks, ambien
   <img width="25%" height="25%" alt="get the add-on button" src="./assets/images/add-on.png" />
 </a>
 
-1. Click "Get the Add-On"
+1. Click "**Add to Firefox**"
 2. Confirm permissions
 
 ### Manual install (signed)
 1. Download `mutabu-vX.X.X.xpi` from the [latest release](https://github.com/gary-host-laptop/mutabu/releases/latest)
 2. Open Firefox and go to `about:addons`
-3. Click the gear icon ⚙ → **Install Add-on From File**
+3. Click the gear icon ⚙ and then "**Install Add-on From File...**"
 4. Select the downloaded `.xpi` file
-5. Click **Add** when prompted
+5. Click "**Add**" when prompted
